@@ -1,0 +1,3398 @@
+NMAP-GUI – SOURCE CODE
+Version 1.0.0 · exported 2026-11-17 14:22
+Licence: GNU General Public License v3.0 or later (the full text is in LICENSE in the repository)
+Homepage: https://github.com/agent-denis/nmap-gui
+22 files, 3257 lines. Not included: the LICENSE text, screenshots and icons.
+
+FILES
+  .gitignore                                                            3 lines
+  CHANGELOG.md                                                         34 lines
+  PRIVACY.txt                                                         140 lines
+  README.md                                                           181 lines
+  check.sh                                                              9 lines
+  docs/PROGRESS.md                                                     49 lines
+  docs/PUBLISHING.md                                                  100 lines
+  install.sh                                                           88 lines
+  nmap-gui                                                              7 lines
+  packaging/build-rpm.sh                                               15 lines
+  packaging/io.github.agent_denis.NmapGui.desktop                      18 lines
+  packaging/io.github.agent_denis.NmapGui.metainfo.xml                 74 lines
+  packaging/nmap-gui.spec                                              91 lines
+  server.py                                                           699 lines
+  static/app.css                                                      260 lines
+  static/app.js                                                       471 lines
+  static/compare.js                                                   344 lines
+  static/index.html                                                   158 lines
+  tests/test_compare.py                                               150 lines
+  tests/test_smoke.py                                                 167 lines
+  tools/export_text.py                                                160 lines
+  uninstall.sh                                                         39 lines
+
+
+====================================================================================================
+FILE: .gitignore   (3 lines)
+====================================================================================================
+__pycache__/
+*.pyc
+Screenshots/
+
+
+====================================================================================================
+FILE: CHANGELOG.md   (34 lines)
+====================================================================================================
+# Changelog
+
+All notable changes to nmap-gui. Dates are in YYYY-MM-DD.
+
+## 1.0.0 – 2026-11-17
+
+The first public release of **nmap-gui**, a modern browser interface for the nmap network scanner.
+
+### Scanning
+- Ten ready-made scan types: Find devices, Quick scan, Quick scan without ping, Regular scan, Service
+  versions, Versions + safe scripts, All TCP ports, OS detection, UDP scan and Intense scan (the last
+  three need sudo). The exact nmap command is shown before you start.
+- Live progress bar; devices and open ports appear while the scan runs; Stop and Run again buttons.
+- Targets are checked and passed straight to nmap (never through a shell).
+
+### Results
+- A card for every device: hostname, MAC address and vendor, OS guess, open ports, software versions
+  and script output.
+- Port table with a filter, nmap's raw output, and a network map coloured by open ports.
+- Scan history, kept between sessions, with delete.
+
+### Changes and email note
+- Compare a scan with an earlier one: new devices, devices not seen, opened and closed ports, changed
+  software versions, devices that moved to another IP address (same MAC), and a different MAC address
+  on a known IP address. Warnings when a comparison could mislead.
+- Email note from an editable template with saved default recipients: Send email (opens your email
+  program), Copy text and Download report (HTML).
+
+### Desktop
+- App menu entry and icon. Clicking it starts nmap-gui and opens the browser, or just opens the page if
+  nmap-gui is already running. It stops by itself after 10 idle minutes; Quit button in the page;
+  *Stop nmap-gui* in the icon's right-click menu; `--stop`, `--port`, `--no-browser`, `--version`.
+- `install.sh` / `uninstall.sh` for a per-user install, and a noarch RPM for Fedora 44 and newer.
+- Light and dark theme; works in narrow windows.
+
+
+====================================================================================================
+FILE: PRIVACY.txt   (140 lines)
+====================================================================================================
+NMAP-GUI – PRIVACY STATEMENT
+============================
+
+Applies to: nmap-gui 1.0.0 and later
+Last updated: 17 November 2026
+
+
+SUMMARY
+-------
+
+nmap-gui runs entirely on your own computer. It does not collect or send any
+data about you, has no user accounts, no advertising, no analytics, no update
+checks and no tracking. The only network traffic it causes is the scans that
+you start yourself. Everything it stores stays in your own home folder, and
+you can delete it at any time.
+
+
+1. WHO IS RESPONSIBLE
+---------------------
+
+nmap-gui is free software, published under the GNU General Public License
+version 3 or later by its developer (GitHub: agent-denis). Because the program
+sends no data to the developer or anyone else, the developer receives no
+information about you, your network or how you use the program.
+
+Questions about this statement:
+https://github.com/agent-denis/nmap-gui/issues
+
+
+2. NETWORK CONNECTIONS
+----------------------
+
+nmap-gui is made of two parts that both run on your computer: a small local
+server and the page you see in your web browser.
+
+  - The local server only listens on 127.0.0.1 (your own computer). Other
+    computers on your network or on the internet cannot reach it. It also
+    refuses requests that come from other websites open in your browser.
+
+  - The page loads nothing from the internet: no fonts, no scripts, no
+    images and no analytics from other websites.
+
+  - When you start a scan, nmap-gui runs the program "nmap" on your computer.
+    nmap then sends network packets to the targets YOU entered, which is the
+    purpose of a network scan. Those devices (and their owners, firewalls or
+    network administrators) can see that they were scanned from your
+    computer. Only scan networks and devices you own or have permission to
+    scan.
+
+  - If you scan a name such as scanme.nmap.org, your computer looks up that
+    name with your normal DNS server, as any program would. nmap may also
+    look up the names of the addresses it finds.
+
+nmap-gui does NOT:
+
+  - send usage statistics, crash reports or "telemetry",
+  - check for updates,
+  - upload or share your scan results,
+  - send email by itself (see section 4).
+
+
+3. WHAT THE PROGRAM STORES, AND WHERE
+-------------------------------------
+
+Everything is stored only in your own home folder:
+
+  ~/.local/share/nmap-gui/scans/
+      One pair of files for every scan in your history:
+        <id>.json  the target, scan type, date and time, nmap's output and
+                   the results;
+        <id>.xml   nmap's own XML report.
+      The results describe the scanned devices: IP addresses, MAC addresses
+      and network-card makers, hostnames, open ports, the software running on
+      them, operating-system guesses and script output (for example web page
+      titles or security certificates). Treat these files as you would any
+      other information about your network.
+
+  ~/.local/share/nmap-gui/settings.json
+      Your email template: the subject, the message wording and the default
+      recipients' email addresses.
+
+  Your web browser
+      Only your light/dark theme choice, in the browser's local storage for
+      the nmap-gui page.
+
+  ~/.local/share/nmap-gui/app/ and installed-files.txt
+      The program itself, when installed with install.sh (no personal data).
+
+If you start nmap-gui with sudo (admin mode), it runs as the administrator,
+and that session's history and settings are stored in the administrator's
+home folder (/root/.local/share/nmap-gui/) instead.
+
+Nothing is shared with other users of the computer beyond what the normal
+file permissions of your home folder allow.
+
+
+4. EMAIL NOTES AND REPORTS
+--------------------------
+
+The Changes tab can prepare a note about what changed on your network.
+
+  - "Send email" asks your computer to open your own email program with the
+    recipients, subject and text filled in. nmap-gui does not send the email
+    and does not see whether it was sent. Once you send it, the people you
+    chose receive the information in the note, and your email provider
+    handles it under its own privacy terms.
+
+  - "Copy text" puts the note on your clipboard.
+
+  - "Download report" saves an HTML file with the changes to your browser's
+    download folder. It stays there until you delete it.
+
+
+5. HOW TO DELETE YOUR DATA
+--------------------------
+
+  - In the program: open a scan and press the bin button to delete it from
+    the history (both of its files are removed).
+  - Delete the folder ~/.local/share/nmap-gui/scans/ to remove all history,
+    and ~/.local/share/nmap-gui/settings.json to reset the email template.
+    nmap-gui creates new, empty ones when needed.
+  - When uninstalling: "./uninstall.sh --purge" (installer version) removes
+    the program and all history and settings. With the RPM package, remove
+    the program with "sudo dnf remove nmap-gui" and delete
+    ~/.local/share/nmap-gui/ yourself.
+  - Downloaded reports are ordinary files in your download folder.
+
+
+6. CHILDREN
+-----------
+
+nmap-gui collects no personal information from anyone, including children.
+
+
+7. CHANGES TO THIS STATEMENT
+----------------------------
+
+If a future version changes how data is handled, this statement will be
+updated and the change will be listed in CHANGELOG.md. The current version is
+always in the source code: PRIVACY.txt.
+
+
+====================================================================================================
+FILE: README.md   (181 lines)
+====================================================================================================
+# nmap-gui
+
+**A modern, easy browser interface for the nmap network scanner.**
+Pick a target, pick a scan type, press Start, and see which devices are on your network, which ports
+are open and what changed since last time.
+
+![nmap-gui: choose a target and one of ten ready-made scan types](docs/screenshots/new-scan.png)
+
+nmap-gui runs a small program on your own computer and shows its interface in your web browser.
+It starts [nmap](https://nmap.org) for you, turns nmap's results into tidy cards, tables and a network
+map, keeps a history of every scan, and can tell you what changed between two scans, with a
+ready-to-send email note for the people who need to know.
+
+> Only scan networks and computers that you own or have permission to scan.
+
+## Contents
+
+- [Features](#features)
+- [Install](#install)
+- [Using nmap-gui](#using-nmap-gui)
+- [Scan types](#scan-types)
+- [Comparing scans and the email note](#comparing-scans-and-the-email-note)
+- [Privacy and safety](#privacy-and-safety)
+- [For developers](#for-developers)
+- [Licence](#licence)
+
+## Features
+
+- **Ten ready-made scan types**, from a quick device search to service versions, scripts, OS
+  detection and UDP. The exact nmap command is shown before you start.
+- **Live progress:** devices and open ports appear while the scan runs; stop it at any time.
+- **Clear results:** a card for every device (hostname, MAC address, vendor, OS guess, open ports and
+  software versions), a port table you can filter, and nmap's raw output.
+- **Network map:** every device around the scanner, coloured by how many ports are open.
+  Click a device to see its details.
+- **History:** every scan is saved, and stays after you close the program.
+- **Changes:** compare a scan with an earlier one: new devices, devices not seen, ports that opened or
+  closed, changed software, a device that moved to another IP address, or a different device on a known
+  address.
+- **Email note:** a ready-to-send message about the changes, from your own template, with
+  *Send email*, *Copy text* and *Download report*.
+- **Light and dark theme**, works in narrow windows too.
+- **No extra packages:** only Python 3 and nmap.
+
+![Results in the dark theme: one card per device](docs/screenshots/results-dark.png)
+
+## Install
+
+nmap-gui needs **Python 3.8 or newer** and **nmap** (`sudo dnf install nmap` on Fedora,
+`sudo apt install nmap` on Debian/Ubuntu).
+
+### Fedora (RPM)
+
+Download `nmap-gui-1.0.0-1.fc45.noarch.rpm` from the
+[Releases page](https://github.com/agent-denis/nmap-gui/releases) and install it:
+
+```sh
+sudo dnf install ./nmap-gui-1.0.0-1.fc45.noarch.rpm
+```
+
+The same RPM works on Fedora 44, 45 and newer. dnf installs nmap too if it is missing.
+
+### Any Linux, for your user only
+
+```sh
+git clone https://github.com/agent-denis/nmap-gui.git
+cd nmap-gui
+./install.sh
+```
+
+`install.sh` needs no root rights. It copies nmap-gui to `~/.local/share/nmap-gui/app`, adds the
+`nmap-gui` command to `~/.local/bin` and adds nmap-gui to your app menu. Run it again to upgrade.
+Remove it with `./uninstall.sh` (add `--purge` to also delete your scan history and settings).
+
+### Without installing
+
+```sh
+./nmap-gui                 # opens http://127.0.0.1:8642 in your browser; Ctrl+C stops it
+```
+
+## Using nmap-gui
+
+Open **nmap-gui** from your app menu. It starts in the background and opens in your browser. Clicking
+the icon again just opens the page again.
+
+1. Type a **target**: one address (`192.168.1.10`), a whole home network (`192.168.1.0/24`), a range
+   (`10.0.0.1-50`) or a name (`scanme.nmap.org`, nmap's own test server).
+2. Pick a **scan type** and press **Start scan**.
+3. Watch the results arrive. The tabs show **Hosts**, **Ports**, **Network map**, **Changes** and
+   nmap's **Raw output**.
+
+nmap-gui stops by itself 10 minutes after you close the last page (unless a scan is running). You can
+also stop it with the ⏻ button on the page, with *Stop nmap-gui* in the icon's right-click menu, or with
+`nmap-gui --stop`.
+
+| Command | What it does |
+|---|---|
+| `nmap-gui` | Start and open the browser |
+| `nmap-gui --port 9000` | Use another port (default 8642) |
+| `nmap-gui --no-browser` | Don't open the browser |
+| `nmap-gui --stop` | Stop a running nmap-gui |
+| `sudo nmap-gui` | Admin mode: unlocks OS detection, UDP and Intense scans |
+
+![Network map: devices around the scanner, coloured by open ports](docs/screenshots/network-map.png)
+
+## Scan types
+
+| Scan type | nmap options | Needs sudo |
+|---|---|---|
+| Find devices | `-sn` | |
+| Quick scan | `-T4 -F` | |
+| Quick scan, no ping | `-T4 -F -Pn` | |
+| Regular scan | (nmap's defaults) | |
+| Service versions | `-T4 -sV` | |
+| Versions + safe scripts | `-T4 -sV -sC` | |
+| All TCP ports | `-T4 -p-` | |
+| OS detection | `-T4 -O --osscan-guess` | yes |
+| UDP scan | `-T4 -sU --top-ports 100` | yes |
+| Intense scan | `-T4 -A` | yes |
+
+nmap-gui always adds `-v` (to show progress) and saves nmap's XML report. Scan types that need sudo are
+greyed out unless nmap-gui was started with `sudo nmap-gui`.
+
+## Comparing scans and the email note
+
+Open a scan and choose the **Changes** tab. nmap-gui compares it with the previous scan of the same
+target (or any scan you pick) and lists what changed.
+
+Below the list is an **email note**, filled in from a template:
+
+> We noticed differences on 192.168.1.0/24 between the scan on Mon, 16 Nov 2026, 13:32 and the scan
+> on Tue, 17 Nov 2026, 13:02. Summary: 2 new devices, 1 device not seen, port changes on 1 device. …
+
+- **Send email** opens your email program with recipient, subject and text filled in; you press Send
+  there. nmap-gui never sends email itself.
+- **Copy text** copies the note, for webmail.
+- **Download report** saves a tidy HTML report to attach.
+- **Edit template** changes the wording and the default recipients. Words in curly brackets such as
+  `{new_devices}` or `{old_time}` are filled in automatically.
+
+![Changes tab: new devices, devices not seen and port changes, with the email note](docs/screenshots/changes.png)
+
+## Privacy and safety
+
+- nmap-gui collects nothing and sends nothing anywhere. It has no accounts, no analytics and no update
+  checks. The only network traffic is the scans that you start. See [PRIVACY.txt](PRIVACY.txt).
+- The interface is only reachable from your own computer (127.0.0.1). Requests from other websites are
+  refused.
+- Targets are checked and passed straight to nmap, never through a shell, so they can't be turned into
+  extra nmap options or commands.
+- Scan history (IP addresses, MAC addresses, hostnames, open ports) is stored in your home folder in
+  `~/.local/share/nmap-gui/`. Delete it at any time.
+
+## For developers
+
+nmap-gui is plain Python (standard library only), HTML, CSS and JavaScript, with no build step.
+
+| File | What it is |
+|---|---|
+| `server.py` | Local web server: runs nmap, reads its XML, compares scans, saves history |
+| `static/index.html`, `app.css` | Page layout and design (light/dark) |
+| `static/app.js` | Scans, results, map, history |
+| `static/compare.js` | Changes tab and email note |
+| `tests/` | End-to-end test (scans 127.0.0.1 only) and comparison tests |
+| `check.sh` | Runs all tests |
+| `install.sh`, `uninstall.sh` | Per-user install with app menu entry |
+| `packaging/` | Desktop entry, AppStream metadata, icons, RPM spec and `build-rpm.sh` |
+| `tools/export_text.py` | Makes `README.txt` and `nmap-gui-source.txt` |
+
+Run the tests with `./check.sh`, and build the RPM with `./packaging/build-rpm.sh`.
+
+## Licence
+
+nmap-gui is free software: you can redistribute it and/or modify it under the terms of the
+**GNU General Public License, version 3 or (at your option) any later version**. It is a copyleft
+licence: if you share a changed version, you must share its source code under the same licence. See
+[LICENSE](LICENSE).
+
+nmap-gui does not include nmap. It runs the nmap program installed on your computer, which has its own
+licence (the Nmap Public Source License). nmap-gui is an independent project and is not affiliated with
+or endorsed by the Nmap Project. Nmap is a trademark of Nmap Software LLC.
+
+
+====================================================================================================
+FILE: check.sh   (9 lines)
+====================================================================================================
+#!/bin/sh
+# Copyright (C) 2026 Denis (https://github.com/agent-denis)
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Quick health check: syntax + full end-to-end smoke test (scans 127.0.0.1 only).
+set -e
+cd "$(dirname "$0")"
+python3 -m py_compile server.py tests/test_smoke.py tests/test_compare.py
+python3 tests/test_smoke.py
+python3 tests/test_compare.py
+
+
+====================================================================================================
+FILE: docs/PROGRESS.md   (49 lines)
+====================================================================================================
+# nmap-gui — progress
+
+## Status (2026-11-17)
+
+Version 1 built and tested; **user tried it 2026-11-17: works well**. Not yet in git
+(the user tests before committing).
+
+Done:
+- Python stdlib server (`server.py`), bound to 127.0.0.1:8642, Host-header + JSON-only guards
+- 6 presets (Intense needs sudo; disabled in the UI otherwise)
+- Live output via server-sent events, progress bar, Stop, Run again, Delete
+- Results: host cards, ports table + filter, network map (rings around the scanner), raw output
+- History saved to `~/.local/share/nmap-gui/scans/`, survives restarts
+- Light/dark theme, phone layout
+- `./check.sh` passes (smoke test scans 127.0.0.1 only)
+- Verified visually in headless Firefox: new-scan form, results, map (20-device demo), dark, phone
+
+## v2: Changes + email note (2026-11-17, user-tested, committed)
+- Changes tab: compares with previous scan of same target (or any picked scan); detects new/missing
+  devices, opened/closed ports, software version changes, IP moves (same MAC), MAC changes, hostname changes
+- Warnings: ping-only scan, different scan types, unfinished scans, different targets
+- Email note from editable template ({placeholders}), saved with default recipients in settings.json
+- Send email = mailto: (limit 1900 chars; longer gets shortened + full HTML report downloaded),
+  Copy text, Download report (.html)
+- NOTE: this PC has no email program set as mailto handler, so Send email does nothing here.
+
+- 10 presets now (added: Quick no-ping, Versions + safe scripts, OS detection*, UDP*; *=sudo); 2-column grid
+
+## v3: desktop launcher (2026-11-17, user-tested (installed via install.sh + RPM), committed)
+- server.py: version 1.0.0, `--app` (auto-stop after 10 min idle, NMAP_GUI_IDLE_MINUTES to override),
+  `--stop`, `--version`; a second launch just opens the browser; busy port -> desktop notification;
+  ⏻ Quit button in the page (stops running scans cleanly, saved as cancelled)
+- install.sh / uninstall.sh (per user, ~/.local, manifest; --purge also deletes history); tested in a fake HOME
+- packaging/: .desktop (right-click "Stop nmap-gui"), metainfo, icons 16-512 + svg, nmap-gui.spec, build-rpm.sh
+- RPM ~/rpmbuild/RPMS/noarch/nmap-gui-1.0.0-1.fc45.noarch.rpm: no python(abi) pin -> also installs on F44;
+  rpmlint 0 errors (only "no man page" warning)
+- Licence: GPL-3.0-or-later (same as Clone Ranger)
+
+## Publishing prep (2026-11-17)
+- README.md rewritten for GitHub (screenshots in docs/screenshots from demo data), README.txt,
+  PRIVACY.txt, CHANGELOG.md, docs/PUBLISHING.md (GitHub steps, description, topics, release notes),
+  nmap-gui-source.txt (tools/export_text.py), GPL-3.0-or-later notices in every source file,
+  metainfo screenshots/urls. Not pushed: user pushes to GitHub manually.
+
+## Ideas for later
+- Custom nmap options field (needs careful validation)
+- Export results (CSV / HTML report)
+- Scheduled automatic scans that email only when something changes (needs SMTP)
+- Map: group by subnet, use traceroute hops when available
+
+
+====================================================================================================
+FILE: docs/PUBLISHING.md   (100 lines)
+====================================================================================================
+# Publishing nmap-gui on GitHub
+
+Everything here is done by you, with your own GitHub account. Nothing is pushed automatically.
+
+## 0. Before you start (once)
+
+- A GitHub account (agent-denis) with an SSH key or the `gh` command logged in, as for Clone Ranger.
+- In this folder, everything committed: `git status` shows nothing to commit.
+- Tests pass: `./check.sh`
+- The text files are fresh: `python3 tools/export_text.py` (rewrites `README.txt` and
+  `nmap-gui-source.txt`; commit them if they changed).
+
+## 1. Create the repository
+
+On <https://github.com/new>:
+
+| Field | Value |
+|---|---|
+| Repository name | `nmap-gui` |
+| Description | see below |
+| Visibility | Public |
+| Add README / .gitignore / licence | **No** (they are already in this folder) |
+
+**Description** (the short "About" text, max. 350 characters):
+
+```
+Modern, easy browser interface for the nmap network scanner: ten ready-made scans, live results, network map, scan history, and a report of what changed since the last scan with a ready-to-send email note. Python standard library only. GPL-3.0-or-later.
+```
+
+**Website:** leave empty (or the Releases page).
+
+**Topics** (in *About → ⚙ → Topics*):
+
+```
+nmap  network-scanner  port-scanner  network-security  network-monitoring  gui  web-ui  python  linux  fedora
+```
+
+## 2. Upload the code
+
+```bash
+cd ~/projects/nmap-gui
+git remote add origin git@github.com:agent-denis/nmap-gui.git
+git push -u origin main
+git tag -a v1.0.0 -m "nmap-gui 1.0.0"
+git push origin v1.0.0
+```
+
+## 3. Make the release
+
+1. Build the RPM from the tagged version: `./packaging/build-rpm.sh`
+   → `~/rpmbuild/RPMS/noarch/nmap-gui-1.0.0-1.fc45.noarch.rpm`
+2. On GitHub: **Releases → Draft a new release → choose tag v1.0.0**
+3. Title: `nmap-gui 1.0.0`
+4. Text: paste the release notes below.
+5. Attach files: the `.noarch.rpm` and, if you like, `nmap-gui-source.txt`.
+6. **Publish release.**
+
+GitHub adds the source code archives automatically. Its address
+`https://github.com/agent-denis/nmap-gui/archive/v1.0.0/nmap-gui-1.0.0.tar.gz` is the `Source0` in the
+RPM spec.
+
+### Release notes (paste into the release)
+
+```markdown
+The first release of **nmap-gui**, a modern browser interface for the nmap network scanner.
+
+- **Ten ready-made scan types**, from finding devices to service versions, scripts, OS detection and UDP
+- **Live results**: device cards, a filterable port table, a network map and nmap's raw output
+- **Scan history**, kept between sessions
+- **Changes**: what changed since an earlier scan (new devices, devices not seen, opened/closed ports,
+  changed software, moved devices) with a **ready-to-send email note**
+- **Desktop app**: app menu icon, starts in the background, stops by itself when idle
+- Light and dark theme · Python standard library only · runs on your own computer, sends no data anywhere
+
+**Install on Fedora 44 or newer:** download the `.noarch.rpm` below, then
+`sudo dnf install ./nmap-gui-1.0.0-1.fc45.noarch.rpm`
+
+**Any Linux:** `git clone https://github.com/agent-denis/nmap-gui.git && cd nmap-gui && ./install.sh`
+
+Needs Python 3.8+ and nmap. Only scan networks you own or have permission to scan.
+Licence: GPL-3.0-or-later. Full list of changes: CHANGELOG.md. Privacy: PRIVACY.txt.
+```
+
+## 4. After publishing (suggested)
+
+- **Settings → General → Features:** keep *Issues* on (the privacy statement points people there).
+- Check that the screenshots show in README on GitHub (they are in `docs/screenshots/`).
+- Later: a COPR repository (as described in Clone Ranger's `docs/PUBLISHING.md`) so people can
+  `dnf install nmap-gui` without downloading the RPM by hand.
+
+## Licence (copyleft)
+
+nmap-gui is licensed **GPL-3.0-or-later**:
+
+- `LICENSE` holds the full licence text; GitHub detects it and shows "GPL-3.0" on the repository page.
+- Every source file starts with a copyright line and `SPDX-License-Identifier: GPL-3.0-or-later`.
+- Anyone may use, study, share and change nmap-gui, but if they distribute a changed version they must
+  publish its source code under the same licence.
+- nmap itself is not included; it is a separate program under its own licence, and nmap-gui is not
+  affiliated with the Nmap Project (stated in README).
+
+
+====================================================================================================
+FILE: install.sh   (88 lines)
+====================================================================================================
+#!/usr/bin/env bash
+# Copyright (C) 2026 Denis (https://github.com/agent-denis)
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Install nmap-gui for the current user (no root, no sudo needed).
+#
+#   ./install.sh        install, or upgrade an existing install (scan history and settings are kept)
+#
+# Puts everything under your home folder:
+#   ~/.local/share/nmap-gui/app        the program
+#   ~/.local/bin/nmap-gui              the command
+#   ~/.local/share/applications/...    app menu entry, plus icons and AppStream metadata
+# Undo with ./uninstall.sh
+set -euo pipefail
+
+APP_ID=io.github.agent_denis.NmapGui
+say()  { printf '  %s\n' "$*"; }
+step() { printf '\n>> %s\n' "$*"; }
+die()  { printf '\nERROR: %s\n' "$*" >&2; exit 1; }
+
+[ "$(id -u)" -ne 0 ] || die "Don't run the installer as root. nmap-gui installs for your own user only."
+
+SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+[ -f "$SRC/server.py" ] && [ -d "$SRC/static" ] || die "Run install.sh from the nmap-gui folder."
+VERSION="$(sed -n 's/^__version__ = "\(.*\)"/\1/p' "$SRC/server.py")"
+
+DATA="${XDG_DATA_HOME:-$HOME/.local/share}"
+case "$DATA" in /*) ;; *) DATA="$HOME/.local/share" ;; esac
+BIN="$HOME/.local/bin"
+APPDIR="$DATA/nmap-gui/app"
+MANIFEST="$DATA/nmap-gui/installed-files.txt"
+
+echo "nmap-gui $VERSION - installer"
+
+step "Checking what nmap-gui needs"
+command -v python3 >/dev/null 2>&1 || die "python3 not found. Install it with: sudo dnf install python3"
+python3 -c 'import sys; sys.exit(0 if sys.version_info >= (3, 8) else 1)' || die "Python 3.8 or newer is needed."
+say "Python $(python3 -c 'import platform; print(platform.python_version())')"
+if command -v nmap >/dev/null 2>&1; then
+    say "$(nmap --version | head -1)"
+else
+    say "WARNING: nmap is not installed yet. Install it with: sudo dnf install nmap"
+fi
+
+step "Installing the program"
+NEW="$APPDIR.new"
+rm -rf "$NEW"
+mkdir -p "$NEW"
+cp "$SRC/server.py" "$SRC/README.md" "$SRC/LICENSE" "$NEW/"
+cp -R "$SRC/static" "$NEW/static"
+rm -rf "$APPDIR"
+mv "$NEW" "$APPDIR"
+say "$APPDIR"
+
+step "Adding the command and the app menu entry"
+: > "$MANIFEST"
+put() {   # put SOURCE DEST MODE : copy a file and remember it for uninstall.sh
+    install -Dm "$3" "$1" "$2"
+    echo "$2" >> "$MANIFEST"
+}
+TMP="$(mktemp)"
+cat > "$TMP" <<EOF
+#!/bin/sh
+# nmap-gui launcher (installed by install.sh)
+exec python3 "$APPDIR/server.py" "\$@"
+EOF
+put "$TMP" "$BIN/nmap-gui" 755
+rm -f "$TMP"
+put "$SRC/packaging/$APP_ID.desktop" "$DATA/applications/$APP_ID.desktop" 644
+put "$SRC/packaging/$APP_ID.metainfo.xml" "$DATA/metainfo/$APP_ID.metainfo.xml" 644
+for f in "$SRC"/packaging/icons/hicolor/*/apps/"$APP_ID".*; do
+    rel="${f#"$SRC/packaging/icons/"}"
+    put "$f" "$DATA/icons/$rel" 644
+done
+# Don't create icons/hicolor/icon-theme.cache here: without an index.theme next to it,
+# GNOME would show the app without its icon. Just touch the folder so the menu refreshes.
+touch "$DATA/icons/hicolor" 2>/dev/null || true
+command -v update-desktop-database >/dev/null 2>&1 && update-desktop-database -q "$DATA/applications" 2>/dev/null || true
+say "command:   $BIN/nmap-gui"
+say "menu item: nmap-gui (in your app menu / Activities search)"
+
+case ":$PATH:" in
+    *":$BIN:"*) ;;
+    *) say "NOTE: $BIN is not on your PATH; the menu item still works." ;;
+esac
+
+echo
+echo "Done. Open nmap-gui from your app menu, or run: nmap-gui"
+echo "For scan types that need sudo (OS detection, UDP, Intense), run in a terminal: sudo nmap-gui"
+
+
+====================================================================================================
+FILE: nmap-gui   (7 lines)
+====================================================================================================
+#!/bin/sh
+# Copyright (C) 2026 Denis (https://github.com/agent-denis)
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Start nmap-gui and open it in the browser.
+#   ./nmap-gui              normal (most scan types)
+#   sudo ./nmap-gui         admin mode (also "Intense scan" with OS detection)
+cd "$(dirname "$0")" && exec python3 server.py "$@"
+
+
+====================================================================================================
+FILE: packaging/build-rpm.sh   (15 lines)
+====================================================================================================
+#!/usr/bin/env bash
+# Copyright (C) 2026 Denis (https://github.com/agent-denis)
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Build the nmap-gui RPM from the files in this folder (committed or not).
+# Result: ~/rpmbuild/RPMS/noarch/nmap-gui-<version>-1.<fedora>.noarch.rpm
+set -euo pipefail
+cd "$(dirname "$0")/.."
+VERSION="$(sed -n 's/^__version__ = "\(.*\)"/\1/p' server.py)"
+rpmdev-setuptree
+git ls-files -co --exclude-standard \
+    | tar -czf ~/rpmbuild/SOURCES/nmap-gui-"$VERSION".tar.gz --transform "s,^,nmap-gui-$VERSION/," -T -
+rpmbuild -ba packaging/nmap-gui.spec
+echo
+echo "Built:"
+ls -1 ~/rpmbuild/RPMS/noarch/nmap-gui-"$VERSION"-*.rpm
+
+
+====================================================================================================
+FILE: packaging/io.github.agent_denis.NmapGui.desktop   (18 lines)
+====================================================================================================
+[Desktop Entry]
+Type=Application
+Version=1.5
+Name=nmap-gui
+GenericName=Network Scanner
+Comment=Scan your network with nmap in a modern browser interface
+Exec=nmap-gui --app
+TryExec=nmap-gui
+Icon=io.github.agent_denis.NmapGui
+Terminal=false
+StartupNotify=false
+Categories=Network;Monitor;
+Keywords=nmap;network;scan;scanner;port;ports;security;devices;lan;wifi;
+Actions=stop;
+
+[Desktop Action stop]
+Name=Stop nmap-gui
+Exec=nmap-gui --stop
+
+
+====================================================================================================
+FILE: packaging/io.github.agent_denis.NmapGui.metainfo.xml   (74 lines)
+====================================================================================================
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.agent_denis.NmapGui</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+  <name>nmap-gui</name>
+  <summary>Scan your network with nmap in a modern interface</summary>
+  <developer id="io.github.agent_denis">
+    <name>Denis</name>
+  </developer>
+  <description>
+    <p>
+      nmap-gui is a modern, easy interface for the nmap network scanner. It runs on your own
+      computer and opens in your web browser.
+    </p>
+    <ul>
+      <li>Ten ready-made scan types, from finding devices to full service and OS detection</li>
+      <li>Live progress with devices and open ports appearing as they are found</li>
+      <li>Results as device cards, a filterable port table and a network map</li>
+      <li>Scan history, and a comparison that shows what changed since an earlier scan</li>
+      <li>A ready-to-send email note about the changes, from your own template</li>
+    </ul>
+    <p>
+      Only scan networks and computers you own or have permission to scan.
+    </p>
+  </description>
+  <launchable type="desktop-id">io.github.agent_denis.NmapGui.desktop</launchable>
+  <url type="homepage">https://github.com/agent-denis/nmap-gui</url>
+  <url type="bugtracker">https://github.com/agent-denis/nmap-gui/issues</url>
+  <url type="vcs-browser">https://github.com/agent-denis/nmap-gui</url>
+  <screenshots>
+    <screenshot type="default">
+      <caption>Choose a target and one of ten ready-made scan types</caption>
+      <image>https://raw.githubusercontent.com/agent-denis/nmap-gui/main/docs/screenshots/new-scan.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>Results: one card per device, dark theme</caption>
+      <image>https://raw.githubusercontent.com/agent-denis/nmap-gui/main/docs/screenshots/results-dark.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>Network map coloured by open ports</caption>
+      <image>https://raw.githubusercontent.com/agent-denis/nmap-gui/main/docs/screenshots/network-map.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>What changed since the last scan, with an email note</caption>
+      <image>https://raw.githubusercontent.com/agent-denis/nmap-gui/main/docs/screenshots/changes.png</image>
+    </screenshot>
+  </screenshots>
+  <categories>
+    <category>Network</category>
+    <category>System</category>
+  </categories>
+  <keywords>
+    <keyword>nmap</keyword>
+    <keyword>network</keyword>
+    <keyword>scanner</keyword>
+    <keyword>port</keyword>
+  </keywords>
+  <provides>
+    <binary>nmap-gui</binary>
+  </provides>
+  <requires>
+    <internet>offline-only</internet>
+  </requires>
+  <content_rating type="oars-1.1"/>
+  <releases>
+    <release version="1.0.0" date="2026-11-17">
+      <description>
+        <p>First release: scan presets, live results, network map, history, change reports with email note,
+          desktop launcher.</p>
+      </description>
+    </release>
+  </releases>
+</component>
+
+
+====================================================================================================
+FILE: packaging/nmap-gui.spec   (91 lines)
+====================================================================================================
+# RPM spec for nmap-gui.
+#
+# Build locally (needs: sudo dnf install rpm-build rpmdevtools desktop-file-utils appstream):
+#
+#   ./packaging/build-rpm.sh
+#
+# nmap-gui uses only the Python standard library and installs outside Python's site-packages,
+# so the RPM does not depend on one Python version: the same noarch RPM installs on
+# Fedora 44, 45 and newer.
+
+%global app_id  io.github.agent_denis.NmapGui
+
+Name:           nmap-gui
+Version:        1.0.0
+Release:        1%{?dist}
+Summary:        Modern browser interface for the nmap network scanner
+
+License:        GPL-3.0-or-later
+URL:            https://github.com/agent-denis/nmap-gui
+Source0:        %{url}/archive/v%{version}/%{name}-%{version}.tar.gz
+
+BuildArch:      noarch
+BuildRequires:  python3
+BuildRequires:  desktop-file-utils
+BuildRequires:  appstream
+
+Requires:       python3 >= 3.8
+Requires:       nmap
+Requires:       xdg-utils
+Requires:       hicolor-icon-theme
+# desktop notifications when it can't start
+Recommends:     libnotify
+
+%description
+nmap-gui is a modern, easy interface for the nmap network scanner. It runs a
+small server on your own computer (127.0.0.1 only) and opens in your web
+browser. It offers ten ready-made scan types, live progress, results as device
+cards, a filterable port table and a network map, a saved scan history, and a
+comparison between scans that lists new devices and port changes, with a
+ready-to-send email note.
+
+%prep
+%autosetup -n %{name}-%{version}
+# started through /usr/bin/nmap-gui, so the file itself needs no #! line
+sed -i '1{/^#!/d}' server.py
+
+%build
+# nothing to build: plain Python (standard library only), HTML, CSS and JavaScript
+
+%install
+install -Dpm 0644 server.py %{buildroot}%{_datadir}/%{name}/server.py
+for f in static/*; do
+    install -Dpm 0644 "$f" %{buildroot}%{_datadir}/%{name}/$f
+done
+install -dm 0755 %{buildroot}%{_bindir}
+cat > %{buildroot}%{_bindir}/%{name} <<'EOF'
+#!/bin/sh
+exec /usr/bin/python3 %{_datadir}/%{name}/server.py "$@"
+EOF
+chmod 0755 %{buildroot}%{_bindir}/%{name}
+
+desktop-file-install --dir=%{buildroot}%{_datadir}/applications packaging/%{app_id}.desktop
+install -Dpm 0644 packaging/%{app_id}.metainfo.xml %{buildroot}%{_metainfodir}/%{app_id}.metainfo.xml
+for size in 16 22 24 32 48 64 128 256 512; do
+    install -Dpm 0644 packaging/icons/hicolor/${size}x${size}/apps/%{app_id}.png \
+        %{buildroot}%{_datadir}/icons/hicolor/${size}x${size}/apps/%{app_id}.png
+done
+install -Dpm 0644 packaging/icons/hicolor/scalable/apps/%{app_id}.svg \
+    %{buildroot}%{_datadir}/icons/hicolor/scalable/apps/%{app_id}.svg
+
+%check
+desktop-file-validate %{buildroot}%{_datadir}/applications/%{app_id}.desktop
+appstreamcli validate --no-net %{buildroot}%{_metainfodir}/%{app_id}.metainfo.xml
+%{__python3} %{buildroot}%{_datadir}/%{name}/server.py --version
+# comparison + settings tests (made-up scans, no nmap, localhost only)
+%{__python3} tests/test_compare.py
+
+%files
+%license LICENSE
+%doc README.md CHANGELOG.md PRIVACY.txt
+%{_bindir}/%{name}
+%{_datadir}/%{name}/
+%{_datadir}/applications/%{app_id}.desktop
+%{_metainfodir}/%{app_id}.metainfo.xml
+%{_datadir}/icons/hicolor/*/apps/%{app_id}.png
+%{_datadir}/icons/hicolor/scalable/apps/%{app_id}.svg
+
+%changelog
+* Tue Nov 17 2026 Denis <356570572+agent-denis@users.noreply.github.com> - 1.0.0-1
+- First release: scan presets, live results, network map, history,
+  change reports with email note, desktop launcher
+
+
+====================================================================================================
+FILE: server.py   (699 lines)
+====================================================================================================
+#!/usr/bin/env python3
+# nmap-gui - a modern browser interface for the nmap network scanner
+# Copyright (C) 2026 Denis (https://github.com/agent-denis)
+# SPDX-License-Identifier: GPL-3.0-or-later
+# This program is free software: you can redistribute it and/or modify it under the terms of
+# the GNU General Public License as published by the Free Software Foundation, either version 3
+# of the License, or (at your option) any later version. It comes WITHOUT ANY WARRANTY.
+# See the LICENSE file or <https://www.gnu.org/licenses/>.
+"""nmap-gui: a modern browser interface for nmap.
+
+Runs a tiny web server on THIS computer only (127.0.0.1), starts nmap scans
+when you press Start, and serves the page you see in the browser.
+Uses only the Python standard library - nothing extra to install.
+
+Usage:  python3 server.py [--port 8642] [--no-browser]
+"""
+import argparse
+import http.client
+import json
+import os
+import re
+import shutil
+import subprocess
+import sys
+import threading
+import time
+import uuid
+import webbrowser
+import xml.etree.ElementTree as ET
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
+from urllib.parse import parse_qs, urlparse
+
+__version__ = "1.0.0"
+APP_ID = "io.github.agent_denis.NmapGui"
+DEFAULT_PORT = 8642
+IDLE_MINUTES = float(os.environ.get("NMAP_GUI_IDLE_MINUTES", 10))   # --app mode: stop after this long with no page open and no scan running
+
+ROOT = Path(__file__).resolve().parent
+STATIC = ROOT / "static"
+DATA = Path(os.environ.get("XDG_DATA_HOME", Path.home() / ".local/share")) / "nmap-gui" / "scans"
+NMAP = shutil.which("nmap")
+IS_ROOT = hasattr(os, "geteuid") and os.geteuid() == 0
+
+# Ready-made scan types. "root": True means nmap refuses to run it without sudo.
+PRESETS = [
+    {"id": "ping", "name": "Find devices", "args": ["-sn"], "root": False,
+     "desc": "Lists which devices are online. No port scan, very fast."},
+    {"id": "quick", "name": "Quick scan", "args": ["-T4", "-F"], "root": False,
+     "desc": "Checks the 100 most common ports."},
+    {"id": "noping", "name": "Quick scan, no ping", "args": ["-T4", "-F", "-Pn"], "root": False,
+     "desc": "For devices that ignore ping (firewalls, Windows PCs). Treats every address as online, "
+             "so it is slow on whole networks."},
+    {"id": "regular", "name": "Regular scan", "args": [], "root": False,
+     "desc": "Checks the 1000 most common ports."},
+    {"id": "services", "name": "Service versions", "args": ["-T4", "-sV"], "root": False,
+     "desc": "Top 1000 ports and identifies the software on each open port."},
+    {"id": "scripts", "name": "Versions + safe scripts", "args": ["-T4", "-sV", "-sC"], "root": False,
+     "desc": "Like Service versions, plus nmap's default scripts: page titles, certificates, "
+             "SSH keys, shared folders and more."},
+    {"id": "allports", "name": "All TCP ports", "args": ["-T4", "-p-"], "root": False,
+     "desc": "Every port from 1 to 65535. Thorough but slow."},
+    {"id": "os", "name": "OS detection", "args": ["-T4", "-O", "--osscan-guess"], "root": True,
+     "desc": "Top 1000 ports and a guess of each device's operating system."},
+    {"id": "udp", "name": "UDP scan", "args": ["-T4", "-sU", "--top-ports", "100"], "root": True,
+     "desc": "The 100 most common UDP ports (DNS, DHCP, SNMP, media servers). Slow."},
+    {"id": "intense", "name": "Intense scan", "args": ["-T4", "-A"], "root": True,
+     "desc": "Versions, operating system, default scripts and traceroute."},
+]
+PRESET_BY_ID = {p["id"]: p for p in PRESETS}
+
+# A target must start with a letter/digit (so it can never be read as an nmap
+# option like "-oN") and may only contain characters used in hosts/IPs/ranges.
+TARGET_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9.:/_,*\-]{0,252}$")
+PROGRESS_RE = re.compile(r"About ([\d.]+)% done")
+STATIC_FILES = {"/": "index.html", "/app.js": "app.js", "/compare.js": "compare.js", "/app.css": "app.css", "/icon.svg": "icon.svg"}
+CONTENT_TYPES = {".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8",
+                 ".css": "text/css; charset=utf-8", ".svg": "image/svg+xml"}
+
+
+def parse_targets(text):
+    parts = str(text).split()
+    if not parts:
+        raise ValueError("Enter a target, e.g. 192.168.1.0/24 or scanme.nmap.org")
+    if len(parts) > 32:
+        raise ValueError("Too many targets (max 32)")
+    for p in parts:
+        if not TARGET_RE.match(p):
+            raise ValueError(f"Not a valid target: {p}")
+    return parts
+
+
+_VERSION = []
+
+
+def nmap_version():
+    """Asks nmap for its version once, then remembers the answer."""
+    if not _VERSION:
+        _VERSION.append(_read_nmap_version())
+    return _VERSION[0]
+
+
+def _read_nmap_version():
+    if not NMAP:
+        return None
+    try:
+        out = subprocess.run([NMAP, "--version"], capture_output=True, text=True, timeout=10).stdout
+        m = re.search(r"Nmap version (\S+)", out)
+        return m.group(1) if m else "unknown"
+    except (OSError, subprocess.SubprocessError):
+        return None
+
+
+# ---------------------------------------------------------------- XML parsing
+
+def _attr(el, name, default=""):
+    return el.get(name, default) if el is not None else default
+
+
+def parse_xml(path):
+    """Turn nmap's XML report into simple JSON-friendly data."""
+    root = ET.parse(path).getroot()
+    hosts = []
+    for h in root.findall("host"):
+        if _attr(h.find("status"), "state") != "up":
+            continue
+        ipv4 = ipv6 = mac = vendor = ""
+        for a in h.findall("address"):
+            t = a.get("addrtype")
+            if t == "ipv4":
+                ipv4 = a.get("addr", "")
+            elif t == "ipv6":
+                ipv6 = a.get("addr", "")
+            elif t == "mac":
+                mac, vendor = a.get("addr", ""), a.get("vendor", "")
+        ports = []
+        for p in h.findall("ports/port"):
+            svc = p.find("service")
+            product = " ".join(x for x in (_attr(svc, "product"), _attr(svc, "version"),
+                                           _attr(svc, "extrainfo")) if x)
+            ports.append({
+                "port": int(p.get("portid", 0)),
+                "proto": p.get("protocol", ""),
+                "state": _attr(p.find("state"), "state"),
+                "reason": _attr(p.find("state"), "reason"),
+                "service": _attr(svc, "name"),
+                "product": product,
+                "scripts": [{"id": s.get("id", ""), "output": s.get("output", "")}
+                            for s in p.findall("script")],
+            })
+        hidden = [{"state": e.get("state", ""), "count": int(e.get("count", 0))}
+                  for e in h.findall("ports/extraports")]
+        osm = h.find("os/osmatch")
+        hosts.append({
+            "ip": ipv4 or ipv6,
+            "ipv6": ipv6,
+            "mac": mac,
+            "vendor": vendor,
+            "hostnames": [n.get("name", "") for n in h.findall("hostnames/hostname")],
+            "reason": _attr(h.find("status"), "reason"),
+            "ports": ports,
+            "hidden_ports": hidden,
+            "os": {"name": osm.get("name"), "accuracy": osm.get("accuracy")} if osm is not None else None,
+            "distance": int(_attr(h.find("distance"), "value", "0") or 0) or None,
+            "trace": [{"ttl": hop.get("ttl"), "ip": hop.get("ipaddr"), "host": hop.get("host", "")}
+                      for hop in h.findall("trace/hop")],
+            "scripts": [{"id": s.get("id", ""), "output": s.get("output", "")}
+                        for s in h.findall("hostscript/script")],
+        })
+    fin = root.find("runstats/finished")
+    hs = root.find("runstats/hosts")
+    return {
+        "hosts": hosts,
+        "summary": _attr(fin, "summary"),
+        "elapsed": float(_attr(fin, "elapsed", "0") or 0),
+        "hosts_up": int(_attr(hs, "up", "0") or 0),
+        "hosts_down": int(_attr(hs, "down", "0") or 0),
+        "hosts_total": int(_attr(hs, "total", "0") or 0),
+    }
+
+
+# ---------------------------------------------------------------- comparing two scans
+
+def _open_ports(host):
+    return {(p["port"], p["proto"]): p for p in host["ports"] if p["state"] == "open"}
+
+
+def _brief(host):
+    return {k: host.get(k) for k in ("ip", "hostnames", "mac", "vendor", "ports", "os")}
+
+
+def diff_scans(a, b):
+    """What changed between two finished scans. The older one is always 'old'."""
+    old, new = (a, b) if a.started <= b.started else (b, a)
+    oh = {h["ip"]: h for h in (old.result or {}).get("hosts", [])}
+    nh = {h["ip"]: h for h in (new.result or {}).get("hosts", [])}
+    new_ips = [ip for ip in nh if ip not in oh]
+    gone_ips = [ip for ip in oh if ip not in nh]
+    other = []
+
+    # Same physical device (same MAC) that just got a different IP is not "new".
+    gone_by_mac = {oh[ip]["mac"]: ip for ip in gone_ips if oh[ip].get("mac")}
+    for ip in list(new_ips):
+        mac = nh[ip].get("mac")
+        if mac and mac in gone_by_mac:
+            old_ip = gone_by_mac.pop(mac)
+            new_ips.remove(ip)
+            gone_ips.remove(old_ip)
+            other.append({"ip": ip, "hostnames": nh[ip]["hostnames"], "what": "IP address",
+                          "old": old_ip, "new": ip})
+
+    ping_only = "ping" in (old.preset["id"], new.preset["id"])
+    warnings = []
+    if ping_only:
+        warnings.append("One of the scans only looked for devices, so open ports were not compared.")
+    elif old.preset["id"] != new.preset["id"]:
+        warnings.append(f"The scans used different scan types ({old.preset['name']} vs "
+                        f"{new.preset['name']}), so some port differences may come from that.")
+    for s in (old, new):
+        if s.status != "done":
+            warnings.append(f"The scan from {time.strftime('%d %b %Y %H:%M', time.localtime(s.started))} "
+                            f"did not finish ({s.status}), so its results may be incomplete.")
+    if " ".join(old.targets) != " ".join(new.targets):
+        warnings.append("The two scans had different targets.")
+
+    port_changes = []
+    for ip in nh:
+        if ip not in oh:
+            continue
+        o, n = oh[ip], nh[ip]
+        if not ping_only:
+            op, np_ = _open_ports(o), _open_ports(n)
+            opened = [np_[k] for k in sorted(np_) if k not in op]
+            closed = [op[k] for k in sorted(op) if k not in np_]
+            changed = [{"port": k[0], "proto": k[1], "old": op[k]["product"], "new": np_[k]["product"]}
+                       for k in sorted(np_) if k in op and op[k]["product"] and np_[k]["product"]
+                       and op[k]["product"] != np_[k]["product"]]
+            if opened or closed or changed:
+                port_changes.append({"ip": ip, "hostnames": n["hostnames"], "opened": opened,
+                                     "closed": closed, "changed": changed})
+        if o.get("mac") and n.get("mac") and o["mac"] != n["mac"]:
+            other.append({"ip": ip, "hostnames": n["hostnames"], "what": "MAC address (different device?)",
+                          "old": f"{o['mac']} {o.get('vendor', '')}".strip(),
+                          "new": f"{n['mac']} {n.get('vendor', '')}".strip()})
+        if o["hostnames"] and n["hostnames"] and o["hostnames"] != n["hostnames"]:
+            other.append({"ip": ip, "hostnames": n["hostnames"], "what": "Hostname",
+                          "old": ", ".join(o["hostnames"]), "new": ", ".join(n["hostnames"])})
+
+    return {
+        "old": old.summary(), "new": new.summary(),
+        "new_hosts": [_brief(nh[ip]) for ip in new_ips],
+        "missing_hosts": [_brief(oh[ip]) for ip in gone_ips],
+        "port_changes": port_changes,
+        "other_changes": other,
+        "ports_compared": not ping_only,
+        "warnings": warnings,
+    }
+
+
+# ---------------------------------------------------------------- settings (email template)
+
+SETTINGS_FILE = DATA.parent / "settings.json"
+DEFAULT_SETTINGS = {
+    "recipients": "",
+    "subject": "Network change detected on {target}",
+    "body": (
+        "Hello,\n\n"
+        "We noticed differences on {target} between the scan on {old_time} "
+        "and the scan on {new_time}.\n\n"
+        "Summary: {summary}\n\n"
+        "New devices detected ({new_count}):\n{new_devices}\n\n"
+        "Devices not seen in the latest scan ({missing_count}):\n{missing_devices}\n\n"
+        "Port changes on known devices:\n{port_changes}\n\n"
+        "Other changes:\n{other_changes}\n"
+        "{warnings}\n"
+        "Regards,\n"
+    ),
+}
+
+
+def load_settings():
+    try:
+        saved = json.loads(SETTINGS_FILE.read_text())
+    except (OSError, ValueError):
+        saved = {}
+    return {k: str(saved.get(k, v)) for k, v in DEFAULT_SETTINGS.items()}
+
+
+def save_settings(data):
+    clean = {}
+    for k, v in DEFAULT_SETTINGS.items():
+        val = str(data.get(k, v))
+        if len(val) > 20000:
+            raise ValueError(f"{k} is too long")
+        clean[k] = val
+    SETTINGS_FILE.parent.mkdir(parents=True, exist_ok=True)
+    tmp = SETTINGS_FILE.with_suffix(".tmp")
+    tmp.write_text(json.dumps(clean, indent=2))
+    tmp.replace(SETTINGS_FILE)
+    return clean
+
+
+# ---------------------------------------------------------------- scans
+
+class Scan:
+    def __init__(self, targets, preset):
+        self.id = time.strftime("%Y%m%d-%H%M%S-") + uuid.uuid4().hex[:6]
+        self.targets = targets
+        self.preset = preset
+        self.args = ["-v", "--stats-every", "2s", *preset["args"]]
+        self.status = "running"          # running | done | failed | cancelled
+        self.started = time.time()
+        self.finished = None
+        self.progress = 0.0
+        self.log = []
+        self.result = None
+        self.error = None
+        self.proc = None
+        self.cond = threading.Condition()
+
+    @property
+    def command(self):
+        shown = [a for a in self.args if a not in ("--stats-every", "2s")]
+        return " ".join(["nmap", *shown, *self.targets])
+
+    def summary(self):
+        r = self.result or {}
+        return {
+            "id": self.id, "target": " ".join(self.targets), "preset": self.preset["id"],
+            "preset_name": self.preset["name"], "command": self.command, "status": self.status,
+            "started": self.started, "finished": self.finished, "progress": self.progress,
+            "hosts_up": r.get("hosts_up"),
+            "open_ports": sum(1 for h in r.get("hosts", []) for p in h["ports"] if p["state"] == "open"),
+        }
+
+    def full(self):
+        return {**self.summary(), "result": self.result, "error": self.error, "log": self.log}
+
+    def _push(self, line):
+        with self.cond:
+            self.log.append(line)
+            self.cond.notify_all()
+
+    def run(self):
+        xml_path = DATA / f"{self.id}.xml"
+        cmd = [NMAP, *self.args, "-oX", str(xml_path), *self.targets]
+        try:
+            self.proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                         text=True, bufsize=1, errors="replace")
+            for line in self.proc.stdout:
+                line = line.rstrip("\n")
+                m = PROGRESS_RE.search(line)
+                if m:
+                    with self.cond:
+                        self.progress = max(self.progress, float(m.group(1)))
+                        self.cond.notify_all()
+                    continue
+                if line.startswith("Stats: "):
+                    continue  # periodic timing noise
+                self._push(line)
+            rc = self.proc.wait()
+        except OSError as e:
+            rc, self.error = -1, str(e)
+
+        if xml_path.exists():
+            try:
+                self.result = parse_xml(xml_path)
+            except ET.ParseError:
+                pass  # cancelled scans leave half-written XML
+        with self.cond:
+            if self.status == "cancelled":
+                pass
+            elif rc == 0:
+                self.status, self.progress = "done", 100.0
+            else:
+                self.status = "failed"
+                if not self.error:
+                    tail = [l for l in self.log if l.strip()][-3:]
+                    self.error = " ".join(tail) or f"nmap exited with code {rc}"
+            self.finished = time.time()
+            self.cond.notify_all()
+        self.save()
+
+    def cancel(self):
+        with self.cond:
+            if self.status != "running":
+                return
+            self.status = "cancelled"
+        if self.proc:
+            self.proc.terminate()
+
+    def save(self):
+        data = {**self.full(), "targets": self.targets}
+        tmp = DATA / f"{self.id}.json.tmp"
+        tmp.write_text(json.dumps(data))
+        tmp.replace(DATA / f"{self.id}.json")
+
+    @classmethod
+    def load(cls, path):
+        d = json.loads(path.read_text())
+        s = cls.__new__(cls)
+        s.id, s.targets = d["id"], d["targets"]
+        s.preset = PRESET_BY_ID.get(d["preset"], {"id": d["preset"], "name": d.get("preset_name", ""), "args": []})
+        s.args = ["-v", *s.preset["args"]]
+        s.status, s.started, s.finished = d["status"], d["started"], d.get("finished")
+        s.progress, s.log, s.result, s.error = d.get("progress", 0), d.get("log", []), d.get("result"), d.get("error")
+        s.proc, s.cond = None, threading.Condition()
+        if s.status == "running":       # server was stopped mid-scan
+            s.status, s.error = "failed", "Interrupted (server stopped)"
+        return s
+
+
+class Store:
+    def __init__(self):
+        DATA.mkdir(parents=True, exist_ok=True)
+        self.scans = {}
+        self.lock = threading.Lock()
+        for f in DATA.glob("*.json"):
+            try:
+                s = Scan.load(f)
+                self.scans[s.id] = s
+            except (ValueError, KeyError, OSError):
+                pass
+
+    def start(self, targets, preset):
+        s = Scan(targets, preset)
+        with self.lock:
+            self.scans[s.id] = s
+        threading.Thread(target=s.run, daemon=True).start()
+        return s
+
+    def get(self, sid):
+        with self.lock:
+            return self.scans.get(sid)
+
+    def list(self):
+        with self.lock:
+            items = list(self.scans.values())
+        return [s.summary() for s in sorted(items, key=lambda s: s.started, reverse=True)]
+
+    def running(self):
+        with self.lock:
+            return [s for s in self.scans.values() if s.status == "running"]
+
+    def cancel_all(self):
+        """Stop running scans and give them a moment to save as 'cancelled'."""
+        scans = self.running()
+        for s in scans:
+            s.cancel()
+        deadline = time.time() + 3
+        while time.time() < deadline and any(s.finished is None for s in scans):
+            time.sleep(0.05)
+
+    def delete(self, sid):
+        with self.lock:
+            s = self.scans.get(sid)
+            if not s or s.status == "running":
+                return False
+            del self.scans[sid]
+        for ext in (".json", ".xml"):
+            (DATA / f"{sid}{ext}").unlink(missing_ok=True)
+        return True
+
+
+# ---------------------------------------------------------------- HTTP
+
+class Handler(BaseHTTPRequestHandler):
+    server_version = "nmap-gui"
+    store: Store = None
+    allowed_hosts: set = set()
+    last_seen = time.time()   # last request from a page; used to stop when idle
+
+    def log_message(self, fmt, *args):
+        pass  # keep the terminal quiet
+
+    def _send(self, code, body=b"", ctype="application/json"):
+        if isinstance(body, (dict, list)):
+            body = json.dumps(body).encode()
+        self.send_response(code)
+        self.send_header("Content-Type", ctype)
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("Cache-Control", "no-store")
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.end_headers()
+        self.wfile.write(body)
+
+    def _guard(self):
+        # Blocks other websites from talking to this server (DNS rebinding).
+        if self.headers.get("Host", "") not in self.allowed_hosts:
+            self._send(403, {"error": "forbidden host"})
+            return False
+        Handler.last_seen = time.time()
+        return True
+
+    def _json_body(self):
+        # Requiring a JSON content type means other websites can't silently
+        # post to us (browsers block that cross-site without our permission).
+        if not self.headers.get("Content-Type", "").startswith("application/json"):
+            raise ValueError("expected JSON")
+        n = int(self.headers.get("Content-Length", 0) or 0)
+        return json.loads(self.rfile.read(min(n, 65536)) or b"{}")
+
+    def do_GET(self):
+        if not self._guard():
+            return
+        path = urlparse(self.path).path
+        if path in STATIC_FILES:
+            f = STATIC / STATIC_FILES[path]
+            return self._send(200, f.read_bytes(), CONTENT_TYPES[f.suffix])
+        if path == "/api/info":
+            return self._send(200, {"nmap": nmap_version(), "root": IS_ROOT, "presets": PRESETS})
+        if path == "/api/scans":
+            return self._send(200, self.store.list())
+        if path == "/api/settings":
+            return self._send(200, {"settings": load_settings(), "defaults": DEFAULT_SETTINGS})
+        if path == "/api/compare":
+            q = parse_qs(urlparse(self.path).query)
+            a = self.store.get(q.get("old", [""])[0])
+            b = self.store.get(q.get("new", [""])[0])
+            if not a or not b:
+                return self._send(404, {"error": "scan not found"})
+            if a.id == b.id:
+                return self._send(400, {"error": "pick two different scans"})
+            if a.status == "running" or b.status == "running" or not a.result or not b.result:
+                return self._send(400, {"error": "both scans need results to compare"})
+            return self._send(200, diff_scans(a, b))
+        m = re.fullmatch(r"/api/scans/([\w-]+)(/events)?", path)
+        if m:
+            s = self.store.get(m.group(1))
+            if not s:
+                return self._send(404, {"error": "not found"})
+            return self._events(s) if m.group(2) else self._send(200, s.full())
+        self._send(404, {"error": "not found"})
+
+    def do_POST(self):
+        if not self._guard():
+            return
+        path = urlparse(self.path).path
+        try:
+            body = self._json_body()
+        except ValueError as e:
+            return self._send(400, {"error": str(e)})
+        if path == "/api/scans":
+            if not NMAP:
+                return self._send(500, {"error": "nmap is not installed"})
+            preset = PRESET_BY_ID.get(body.get("preset"))
+            if not preset:
+                return self._send(400, {"error": "Unknown scan type"})
+            if preset["root"] and not IS_ROOT:
+                return self._send(400, {"error": f"'{preset['name']}' needs administrator rights (sudo)"})
+            try:
+                targets = parse_targets(body.get("target", ""))
+            except ValueError as e:
+                return self._send(400, {"error": str(e)})
+            return self._send(201, self.store.start(targets, preset).summary())
+        if path == "/api/settings":
+            try:
+                return self._send(200, {"settings": save_settings(body), "defaults": DEFAULT_SETTINGS})
+            except ValueError as e:
+                return self._send(400, {"error": str(e)})
+        if path == "/api/quit":
+            self._send(200, {"ok": True})
+            self.store.cancel_all()
+            threading.Thread(target=self.server.shutdown, daemon=True).start()
+            return
+        m = re.fullmatch(r"/api/scans/([\w-]+)/cancel", path)
+        if m and (s := self.store.get(m.group(1))):
+            s.cancel()
+            return self._send(200, s.summary())
+        self._send(404, {"error": "not found"})
+
+    def do_DELETE(self):
+        if not self._guard():
+            return
+        m = re.fullmatch(r"/api/scans/([\w-]+)", urlparse(self.path).path)
+        if m and self.store.delete(m.group(1)):
+            return self._send(200, {"ok": True})
+        self._send(400, {"error": "cannot delete (missing or still running)"})
+
+    def _events(self, s):
+        """Server-sent events: streams new output lines and progress live."""
+        self.send_response(200)
+        self.send_header("Content-Type", "text/event-stream")
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        sent, last_progress = 0, -1
+        try:
+            while True:
+                with s.cond:
+                    while (sent == len(s.log) and s.progress == last_progress and s.status == "running"):
+                        if not s.cond.wait(timeout=15):
+                            break
+                    lines, status, progress = s.log[sent:], s.status, s.progress
+                sent += len(lines)
+                msg = ""
+                if lines:
+                    msg += f"event: log\ndata: {json.dumps(lines)}\n\n"
+                if progress != last_progress:
+                    last_progress = progress
+                    msg += f"event: progress\ndata: {progress}\n\n"
+                if status != "running":
+                    msg += f"event: end\ndata: {json.dumps(status)}\n\n"
+                self.wfile.write((msg or ": ping\n\n").encode())
+                self.wfile.flush()
+                if status != "running":
+                    return
+        except (BrokenPipeError, ConnectionResetError):
+            return
+
+
+def _local(port, method, path, body=None):
+    """Talk to an nmap-gui that may already be running on this port."""
+    c = http.client.HTTPConnection("127.0.0.1", port, timeout=3)
+    headers = {"Host": f"127.0.0.1:{port}"}
+    if body is not None:
+        headers["Content-Type"] = "application/json"
+    c.request(method, path, body=body, headers=headers)
+    r = c.getresponse()
+    return r.status, r.read()
+
+
+def already_running(port):
+    try:
+        status, data = _local(port, "GET", "/api/info")
+        return status == 200 and "presets" in json.loads(data)
+    except (OSError, ValueError):
+        return False
+
+
+def notify(msg):
+    """Show a message in the terminal and as a desktop notification."""
+    print(msg, file=sys.stderr)
+    if shutil.which("notify-send"):
+        subprocess.run(["notify-send", "--app-name=nmap-gui", f"--icon={APP_ID}", "nmap-gui", msg],
+                       check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+
+def idle_watchdog(httpd, minutes):
+    while True:
+        time.sleep(min(15, minutes * 15))
+        if not Handler.store.running() and time.time() - Handler.last_seen > minutes * 60:
+            print(f"No page open for {minutes} minutes - stopping.")
+            httpd.shutdown()
+            return
+
+
+def main():
+    ap = argparse.ArgumentParser(description="Browser interface for nmap")
+    ap.add_argument("--port", type=int, default=int(os.environ.get("NMAP_GUI_PORT", DEFAULT_PORT)))
+    ap.add_argument("--no-browser", action="store_true", help="don't open the browser automatically")
+    ap.add_argument("--app", action="store_true",
+                    help=f"desktop-launcher mode: stop by itself after {IDLE_MINUTES} minutes with no page open")
+    ap.add_argument("--stop", action="store_true", help="stop an nmap-gui that is already running")
+    ap.add_argument("--version", action="version", version=f"nmap-gui {__version__}")
+    a = ap.parse_args()
+    url = f"http://127.0.0.1:{a.port}/"
+
+    if a.stop:
+        try:
+            _local(a.port, "POST", "/api/quit", "{}")
+            print("nmap-gui stopped.")
+        except OSError:
+            print("nmap-gui is not running.")
+        return
+
+    if already_running(a.port):
+        print(f"nmap-gui is already running at {url}")
+        if not a.no_browser:
+            webbrowser.open(url)
+        return
+
+    try:
+        httpd = ThreadingHTTPServer(("127.0.0.1", a.port), Handler)
+    except OSError as e:
+        notify(f"Can't start: port {a.port} is used by another program ({e.strerror}). "
+               f"Try: nmap-gui --port {a.port + 1}")
+        sys.exit(1)
+    Handler.store = Store()
+    port = httpd.server_address[1]
+    Handler.allowed_hosts = {f"127.0.0.1:{port}", f"localhost:{port}"}
+    url = f"http://127.0.0.1:{port}/"
+    print(f"nmap-gui {__version__} running at {url}  (press Ctrl+C to stop)")
+    if not NMAP:
+        notify("nmap was not found. Install it with: sudo dnf install nmap")
+    if a.app:
+        threading.Thread(target=idle_watchdog, args=(httpd, IDLE_MINUTES), daemon=True).start()
+    if not a.no_browser:
+        threading.Timer(0.5, webbrowser.open, args=[url]).start()
+    try:
+        httpd.serve_forever()
+    except KeyboardInterrupt:
+        print("\nStopped.")
+    finally:
+        Handler.store.cancel_all()
+        httpd.server_close()
+
+
+if __name__ == "__main__":
+    main()
+
+
+====================================================================================================
+FILE: static/app.css   (260 lines)
+====================================================================================================
+/*
+ * nmap-gui - a modern browser interface for the nmap network scanner
+ * Copyright (C) 2026 Denis (https://github.com/agent-denis)
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ * This program is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either version 3
+ * of the License, or (at your option) any later version. It comes WITHOUT ANY WARRANTY.
+ * See the LICENSE file or <https://www.gnu.org/licenses/>.
+ */
+:root {
+  --bg: #f5f7fb;
+  --surface: #ffffff;
+  --surface-2: #eef2f7;
+  --border: #dde3ec;
+  --text: #0f172a;
+  --muted: #5b6b82;
+  --accent: #0d9488;
+  --accent-text: #ffffff;
+  --accent-soft: #ccfbf1;
+  --danger: #dc2626;
+  --warn: #b45309;
+  --ok: #15803d;
+  --node-none: #94a3b8;
+  --node-some: #0d9488;
+  --node-many: #d97706;
+  --shadow: 0 1px 2px rgb(15 23 42 / .06), 0 4px 16px rgb(15 23 42 / .05);
+  --radius: 12px;
+  --mono: ui-monospace, "JetBrains Mono", "Fira Code", "Cascadia Code", Menlo, monospace;
+  --sans: Inter, "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0b1120; --surface: #111a2e; --surface-2: #17223a; --border: #23314d;
+    --text: #e2e8f0; --muted: #8a9bb8; --accent: #2dd4bf; --accent-text: #042f2e;
+    --accent-soft: #134e4a; --danger: #f87171; --warn: #fbbf24; --ok: #4ade80;
+    --node-none: #64748b; --node-some: #2dd4bf; --node-many: #fbbf24;
+    --shadow: 0 1px 2px rgb(0 0 0 / .3), 0 8px 24px rgb(0 0 0 / .25);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0b1120; --surface: #111a2e; --surface-2: #17223a; --border: #23314d;
+  --text: #e2e8f0; --muted: #8a9bb8; --accent: #2dd4bf; --accent-text: #042f2e;
+  --accent-soft: #134e4a; --danger: #f87171; --warn: #fbbf24; --ok: #4ade80;
+  --node-none: #64748b; --node-some: #2dd4bf; --node-many: #fbbf24;
+  --shadow: 0 1px 2px rgb(0 0 0 / .3), 0 8px 24px rgb(0 0 0 / .25);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body { background: var(--bg); color: var(--text); font: 15px/1.5 var(--sans); }
+h1 { font-size: 1.5rem; margin: 0 0 4px; letter-spacing: -.01em; }
+.mono { font-family: var(--mono); }
+.muted { color: var(--muted); }
+.small { font-size: .85rem; }
+[hidden] { display: none !important; }
+
+/* Top bar */
+.topbar {
+  position: sticky; top: 0; z-index: 20; height: 56px;
+  display: flex; align-items: center; gap: 12px; padding: 0 16px;
+  background: var(--surface); border-bottom: 1px solid var(--border);
+}
+.brand { display: flex; align-items: center; gap: 10px; font-size: 1.1rem; font-weight: 500; }
+.brand b { color: var(--accent); font-weight: 700; }
+.topbar-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+.chip { font-size: .78rem; padding: 3px 10px; border-radius: 999px; background: var(--surface-2); color: var(--muted); border: 1px solid var(--border); white-space: nowrap; }
+.chip.warn { color: var(--warn); }
+.chip.ok { color: var(--ok); }
+
+/* Layout */
+.layout { display: grid; grid-template-columns: 280px 1fr; min-height: calc(100vh - 56px); }
+.sidebar { border-right: 1px solid var(--border); background: var(--surface); padding: 16px; overflow-y: auto; height: calc(100vh - 56px); position: sticky; top: 56px; }
+.main { padding: 28px clamp(16px, 4vw, 40px); min-width: 0; max-width: 1200px; }
+.sidebar-title { margin: 20px 0 8px; font-size: .75rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; }
+.menu-btn { display: none; }
+.scrim { display: none; }
+
+/* History list */
+.history { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.history li { padding: 10px 12px; border-radius: 10px; cursor: pointer; border: 1px solid transparent; }
+.history li:hover { background: var(--surface-2); }
+.history li.active { background: var(--accent-soft); border-color: var(--accent); }
+.history .h-target { font-family: var(--mono); font-size: .88rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: flex; align-items: center; gap: 8px; }
+.history .h-meta { font-size: .78rem; color: var(--muted); margin-top: 2px; }
+
+/* Buttons & inputs */
+.btn {
+  font: inherit; font-size: .9rem; font-weight: 500; cursor: pointer;
+  padding: 8px 14px; border-radius: 9px; border: 1px solid var(--border);
+  background: var(--surface); color: var(--text); transition: background .15s, border-color .15s, transform .05s;
+}
+.btn:hover { background: var(--surface-2); }
+.btn:active { transform: translateY(1px); }
+.btn.primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+.btn.primary:hover { filter: brightness(1.08); }
+.btn.danger { color: var(--danger); }
+.btn.ghost { border-color: transparent; background: transparent; }
+.btn.wide { width: 100%; }
+.btn.big { padding: 12px 22px; font-size: 1rem; }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.icon-btn { font: inherit; font-size: 1.1rem; width: 36px; height: 36px; border-radius: 9px; border: 1px solid var(--border); background: var(--surface); color: var(--text); cursor: pointer; }
+.link-btn { font: inherit; font-size: .85rem; background: none; border: 0; padding: 0; color: var(--accent); cursor: pointer; }
+.link-btn:hover { text-decoration: underline; }
+.input {
+  font: inherit; width: 100%; padding: 11px 14px; border-radius: 10px;
+  border: 1px solid var(--border); background: var(--bg); color: var(--text); outline: none;
+}
+.input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.label { display: block; font-weight: 600; font-size: .9rem; margin: 18px 0 8px; }
+.label:first-child { margin-top: 0; }
+
+/* Cards */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); }
+.form-card { padding: 24px; margin-top: 20px; max-width: 820px; }
+.examples { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 8px; align-items: baseline; }
+
+/* Preset picker */
+.presets { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px; }
+.preset { display: flex; flex-direction: column; justify-content: flex-start; text-align: left; font: inherit; color: inherit; cursor: pointer; padding: 14px; border-radius: 10px; border: 1.5px solid var(--border); background: var(--bg); transition: border-color .15s, background .15s; }
+.preset:hover { border-color: var(--accent); }
+.preset.selected { border-color: var(--accent); background: var(--accent-soft); }
+.preset:disabled { opacity: .5; cursor: not-allowed; border-color: var(--border); }
+.preset-name { font-weight: 600; display: flex; justify-content: space-between; gap: 8px; }
+.preset-desc { font-size: .84rem; color: var(--muted); margin-top: 4px; }
+.badge { font-size: .7rem; font-weight: 600; padding: 1px 7px; border-radius: 999px; background: var(--surface-2); color: var(--warn); border: 1px solid var(--border); white-space: nowrap; }
+.command-preview { margin: 16px 0; padding: 10px 14px; border-radius: 9px; background: var(--surface-2); font-size: .85rem; color: var(--muted); overflow-x: auto; white-space: nowrap; }
+.form-error { color: var(--danger); margin-bottom: 12px; font-weight: 500; }
+
+/* Scan view */
+.scan-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px 24px; align-items: flex-start; }
+.scan-head h1 { font-family: var(--mono); word-break: break-all; }
+.scan-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.status { font-size: .8rem; font-weight: 600; padding: 4px 10px; border-radius: 999px; background: var(--surface-2); display: inline-flex; align-items: center; gap: 6px; }
+.status::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+.status.running { color: var(--accent); }
+.status.running::before { animation: pulse 1.2s infinite; }
+.status.done { color: var(--ok); }
+.status.failed { color: var(--danger); }
+.status.cancelled { color: var(--warn); }
+@keyframes pulse { 50% { opacity: .25; } }
+.sdot { width: 8px; height: 8px; border-radius: 50%; flex: none; background: var(--muted); }
+.sdot.running { background: var(--accent); animation: pulse 1.2s infinite; }
+.sdot.done { background: var(--ok); }
+.sdot.failed { background: var(--danger); }
+.sdot.cancelled { background: var(--warn); }
+
+.progress { height: 4px; background: var(--surface-2); border-radius: 4px; overflow: hidden; margin: 18px 0 4px; }
+.progress-bar { height: 100%; width: 0; background: var(--accent); transition: width .4s ease; }
+.progress.indeterminate .progress-bar { width: 30%; animation: slide 1.4s ease-in-out infinite; }
+@keyframes slide { from { transform: translateX(-100%); } to { transform: translateX(340%); } }
+
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 18px 0; }
+.stat { padding: 14px 16px; }
+.stat-value { font-size: 1.6rem; font-weight: 700; letter-spacing: -.02em; }
+.stat-value.text { font-size: 1.15rem; padding: 6px 0 5px; }
+.stat-label { font-size: .8rem; color: var(--muted); }
+
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 16px; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
+.tab { font: inherit; font-weight: 500; padding: 10px 14px; border: 0; background: none; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; }
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* Host cards */
+.hosts { display: grid; gap: 12px; }
+.host { overflow: hidden; }
+.host.flash { animation: flash 1.2s; }
+@keyframes flash { 0%, 40% { box-shadow: 0 0 0 3px var(--accent); } }
+.host-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 14px 18px; cursor: pointer; }
+.host-ip { font-family: var(--mono); font-weight: 600; font-size: 1.02rem; }
+.host-name { color: var(--muted); font-size: .9rem; }
+.host-tags { margin-left: auto; display: flex; flex-wrap: wrap; gap: 6px; }
+.tag { font-size: .76rem; padding: 2px 9px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--border); color: var(--muted); white-space: nowrap; }
+.tag.open { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+.host-body { border-top: 1px solid var(--border); padding: 14px 18px; display: none; }
+.host.expanded .host-body { display: block; }
+.chev { transition: transform .2s; color: var(--muted); }
+.host.expanded .chev { transform: rotate(90deg); }
+.kv { display: grid; grid-template-columns: max-content 1fr; gap: 4px 16px; font-size: .88rem; margin-bottom: 12px; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; font-family: var(--mono); word-break: break-word; }
+.script-out { white-space: pre-wrap; font-family: var(--mono); font-size: .8rem; color: var(--muted); margin: 4px 0 0; }
+
+/* Tables */
+.table-wrap { overflow-x: auto; }
+.table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+.table th { text-align: left; font-size: .75rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; padding: 8px 12px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+.table td { padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+.table tr:last-child td { border-bottom: 0; }
+.table td.mono { white-space: nowrap; }
+.state { font-weight: 600; font-size: .82rem; }
+.state.open { color: var(--ok); }
+.state.closed { color: var(--muted); }
+.state.filtered, .state[class*="filtered"] { color: var(--warn); }
+.filter { margin-bottom: 12px; max-width: 360px; }
+#tab-ports .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
+
+/* Map */
+.map-card { padding: 8px; }
+#map { width: 100%; height: min(70vh, 640px); display: block; }
+#map .link { stroke: var(--border); stroke-width: 1.2; }
+#map .node circle { stroke: var(--surface); stroke-width: 2.5; cursor: pointer; transition: r .15s; }
+#map .node:hover circle { stroke: var(--text); }
+#map .node text { fill: var(--text); font: 11px var(--mono); pointer-events: none; }
+#map .node .sub { fill: var(--muted); font: 10px var(--sans); }
+#map .center circle { fill: var(--surface-2); stroke: var(--accent); stroke-width: 2; cursor: default; }
+#map .center text { font: 600 12px var(--sans); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 10px; align-items: center; }
+.dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; }
+
+/* Raw output */
+.output { margin: 0; padding: 16px; font-size: .8rem; line-height: 1.55; max-height: 70vh; overflow: auto; white-space: pre-wrap; word-break: break-word; }
+
+.empty { text-align: center; padding: 48px 16px; color: var(--muted); }
+.empty-icon { font-size: 2rem; margin-bottom: 8px; }
+
+/* Phone / narrow screens */
+@media (max-width: 820px) {
+  .layout { grid-template-columns: 1fr; }
+  .menu-btn { display: inline-block; }
+  .sidebar { position: fixed; top: 56px; left: 0; bottom: 0; width: 280px; z-index: 30; transform: translateX(-100%); transition: transform .2s; height: auto; }
+  body.nav-open .sidebar { transform: none; }
+  body.nav-open .scrim { display: block; position: fixed; inset: 56px 0 0 0; background: rgb(0 0 0 / .4); z-index: 25; }
+  #nmapVersion { display: none; }
+  .host-tags { margin-left: 0; width: 100%; }
+  #map { height: auto; aspect-ratio: 1; }
+}
+
+/* Changes tab */
+.tab-badge { display: inline-block; min-width: 20px; padding: 0 6px; margin-left: 4px; border-radius: 999px; font-size: .72rem; font-weight: 700; line-height: 18px; text-align: center; background: var(--node-many); color: #fff; }
+.tab-badge.zero { background: var(--surface-2); color: var(--muted); border: 1px solid var(--border); }
+.compare-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-bottom: 16px; }
+.select { width: auto; max-width: 100%; padding: 8px 12px; }
+.diff-times { margin: 0 0 14px; }
+.diff-section { padding: 16px 18px; margin-bottom: 12px; border-left: 4px solid var(--border); }
+.diff-section.new { border-left-color: var(--node-many); }
+.diff-section.missing { border-left-color: var(--node-none); }
+.diff-section.ports { border-left-color: var(--accent); }
+.diff-section.other { border-left-color: var(--danger); }
+.diff-section h3 { margin: 0 0 8px; font-size: 1rem; }
+.diff-section ul { margin: 0; padding-left: 18px; }
+.diff-section li { margin: 4px 0; }
+.diff-section li .mono { font-weight: 600; }
+.plus { color: var(--ok); font-weight: 600; }
+.minus { color: var(--danger); font-weight: 600; }
+.notice { padding: 10px 14px; border-radius: 9px; background: var(--surface-2); border: 1px solid var(--border); margin-top: 12px; }
+.notice.warn { color: var(--warn); }
+.warn-list { margin: 0 0 12px; padding: 10px 14px 10px 32px; color: var(--warn); }
+.email-card { padding: 20px 24px; margin-top: 20px; }
+.email-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 6px 16px; }
+.email-head h2 { margin: 0; font-size: 1.15rem; }
+textarea.input { resize: vertical; font-size: .85rem; line-height: 1.5; }
+.btn-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.hint { margin: 12px 0 0; }
+.template-editor { margin: 14px 0 6px; padding: 16px; border-radius: 10px; background: var(--surface-2); border: 1px dashed var(--border); }
+.template-editor .input { background: var(--surface); }
+.placeholders { display: flex; flex-wrap: wrap; gap: 6px; }
+.placeholders button { font: .78rem var(--mono); padding: 2px 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: var(--accent); cursor: pointer; }
+
+
+====================================================================================================
+FILE: static/app.js   (471 lines)
+====================================================================================================
+/*
+ * nmap-gui - a modern browser interface for the nmap network scanner
+ * Copyright (C) 2026 Denis (https://github.com/agent-denis)
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ * This program is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either version 3
+ * of the License, or (at your option) any later version. It comes WITHOUT ANY WARRANTY.
+ * See the LICENSE file or <https://www.gnu.org/licenses/>.
+ */
+// nmap-gui front end. Talks to server.py through a small JSON API.
+"use strict";
+
+const $ = (sel) => document.querySelector(sel);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) =>
+  ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+const state = {
+  info: null,
+  scans: [],
+  presetId: "quick",
+  current: null,      // full scan object being shown
+  events: null,       // live EventSource while a scan runs
+  tab: "hosts",
+};
+
+async function api(path, opts = {}) {
+  const res = await fetch(path, {
+    ...opts,
+    headers: opts.body ? { "Content-Type": "application/json" } : {},
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
+  return data;
+}
+
+// ------------------------------------------------------------------ helpers
+
+function timeAgo(ts) {
+  const s = Math.round(Date.now() / 1000 - ts);
+  if (s < 60) return "just now";
+  if (s < 3600) return `${Math.floor(s / 60)} min ago`;
+  if (s < 86400) return `${Math.floor(s / 3600)} h ago`;
+  return new Date(ts * 1000).toLocaleDateString();
+}
+
+function duration(sec) {
+  if (sec == null) return "–";
+  if (sec < 60) return `${sec.toFixed(1)} s`;
+  return `${Math.floor(sec / 60)} min ${Math.round(sec % 60)} s`;
+}
+
+function ipKey(ip) {
+  // Sort IPv4 numerically; anything else alphabetically after.
+  const p = ip.split(".");
+  return p.length === 4 && p.every((x) => /^\d+$/.test(x))
+    ? p.map((x) => x.padStart(3, "0")).join(".") : "~" + ip;
+}
+
+const openPorts = (h) => h.ports.filter((p) => p.state === "open");
+const statusLabel = { running: "Running", done: "Finished", failed: "Failed", cancelled: "Stopped" };
+
+// ------------------------------------------------------------------ theme
+
+function initTheme() {
+  let saved = null;
+  try { saved = localStorage.getItem("theme"); } catch (_) {}
+  if (saved) document.documentElement.dataset.theme = saved;
+  $("#themeBtn").onclick = () => {
+    const cur = document.documentElement.dataset.theme ||
+      (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    const next = cur === "dark" ? "light" : "dark";
+    document.documentElement.dataset.theme = next;
+    try { localStorage.setItem("theme", next); } catch (_) {}
+  };
+}
+
+// ------------------------------------------------------------------ history
+
+async function loadHistory() {
+  try { state.scans = await api("/api/scans"); } catch (_) { return; }
+  renderHistory();
+}
+
+function renderHistory() {
+  const ul = $("#history");
+  $("#emptyHistory").hidden = state.scans.length > 0;
+  ul.innerHTML = state.scans.map((s) => {
+    const bits = [s.preset_name, timeAgo(s.started)];
+    if (s.hosts_up != null) bits.push(`${s.hosts_up} up`);
+    if (s.open_ports) bits.push(`${s.open_ports} open`);
+    const active = state.current && state.current.id === s.id ? "active" : "";
+    return `<li class="${active}" data-id="${esc(s.id)}">
+      <div class="h-target"><span class="sdot ${esc(s.status)}"></span>${esc(s.target)}</div>
+      <div class="h-meta">${esc(bits.join(" · "))}</div></li>`;
+  }).join("");
+}
+
+$("#history").addEventListener("click", (e) => {
+  const li = e.target.closest("li[data-id]");
+  if (li) location.hash = `#/scan/${li.dataset.id}`;
+});
+
+// ------------------------------------------------------------------ new scan form
+
+function renderPresets() {
+  const root = state.info.root;
+  $("#presets").innerHTML = state.info.presets.map((p) => {
+    const locked = p.root && !root;
+    return `<button type="button" class="preset ${p.id === state.presetId ? "selected" : ""}"
+      data-id="${p.id}" ${locked ? "disabled title='Start nmap-gui with sudo to use this'" : ""}>
+      <div class="preset-name">${esc(p.name)}${p.root ? `<span class="badge">${root ? "admin" : "needs sudo"}</span>` : ""}</div>
+      <div class="preset-desc">${esc(p.desc)}</div></button>`;
+  }).join("");
+  updatePreview();
+}
+
+function updatePreview() {
+  const p = state.info.presets.find((x) => x.id === state.presetId);
+  const target = $("#target").value.trim() || "<target>";
+  $("#commandPreview").textContent = ["$ nmap -v", ...p.args, target].join(" ");
+}
+
+$("#presets").addEventListener("click", (e) => {
+  const b = e.target.closest(".preset");
+  if (!b || b.disabled) return;
+  state.presetId = b.dataset.id;
+  renderPresets();
+});
+$("#target").addEventListener("input", updatePreview);
+document.querySelectorAll("[data-target]").forEach((b) =>
+  b.addEventListener("click", () => { $("#target").value = b.dataset.target; updatePreview(); $("#target").focus(); }));
+
+$("#scanForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  await startScan($("#target").value.trim(), state.presetId);
+});
+
+async function startScan(target, preset) {
+  const err = $("#formError");
+  err.hidden = true;
+  $("#startBtn").disabled = true;
+  try {
+    const s = await api("/api/scans", { method: "POST", body: JSON.stringify({ target, preset }) });
+    await loadHistory();
+    location.hash = `#/scan/${s.id}`;
+  } catch (ex) {
+    if (!$("#newView").hidden) { err.textContent = ex.message; err.hidden = false; }
+    else alert(ex.message);
+  } finally {
+    $("#startBtn").disabled = false;
+  }
+}
+
+function showNew() {
+  closeEvents();
+  state.current = null;
+  $("#scanView").hidden = true;
+  $("#newView").hidden = false;
+  renderHistory();
+  $("#target").focus();
+}
+
+// ------------------------------------------------------------------ scan view
+
+function closeEvents() {
+  if (state.events) { state.events.close(); state.events = null; }
+}
+
+async function showScan(id) {
+  closeEvents();
+  let s;
+  try { s = await api(`/api/scans/${encodeURIComponent(id)}`); }
+  catch (_) { location.hash = "#/new"; return; }
+  state.current = s;
+  $("#newView").hidden = true;
+  $("#scanView").hidden = false;
+  $("#portFilter").value = "";
+  renderHistory();
+  renderScan();
+  if (s.status === "running") followLive(s);
+  onScanShown(s);   // compare.js: fills the Changes tab
+}
+
+function followLive(s) {
+  const es = new EventSource(`/api/scans/${encodeURIComponent(s.id)}/events`);
+  state.events = es;
+  let pending = false;
+  es.addEventListener("log", (e) => {
+    s.log.push(...JSON.parse(e.data));
+    // Re-render at most a few times a second while output streams in.
+    if (!pending) { pending = true; setTimeout(() => { pending = false; if (state.current === s) renderScan(); }, 300); }
+  });
+  es.addEventListener("progress", (e) => { s.progress = parseFloat(e.data); renderProgress(); });
+  es.addEventListener("end", async () => {
+    closeEvents();
+    await loadHistory();
+    if (state.current && state.current.id === s.id) showScan(s.id);
+  });
+  es.onerror = () => { /* browser retries automatically */ };
+}
+
+// While running, nmap's results file isn't ready yet, so build a live
+// preview from its text output.
+function liveResult(log) {
+  const hosts = new Map();
+  const get = (ip, name) => {
+    if (!hosts.has(ip)) hosts.set(ip, { ip, hostnames: name ? [name] : [], ports: [], hidden_ports: [], trace: [], scripts: [], live: true });
+    return hosts.get(ip);
+  };
+  for (const line of log) {
+    let m = line.match(/^Nmap scan report for (\S+)(?: \(([^)]+)\))?(.*)$/);
+    if (m && !/host down/.test(m[3])) { m[2] ? get(m[2], m[1]) : get(m[1]); continue; }
+    m = line.match(/^Discovered open port (\d+)\/(\w+) on (\S+)/);
+    if (m) get(m[3]).ports.push({ port: +m[1], proto: m[2], state: "open", service: "", product: "", scripts: [] });
+  }
+  const list = [...hosts.values()];
+  return { hosts: list, hosts_up: list.length, live: true };
+}
+
+function renderScan() {
+  const s = state.current;
+  const running = s.status === "running";
+  const result = s.result || (running ? liveResult(s.log) : { hosts: [] });
+  $("#scanTitle").textContent = s.target;
+  $("#scanCommand").textContent = s.command;
+  const st = $("#scanStatus");
+  st.className = `status ${s.status}`;
+  st.textContent = statusLabel[s.status] || s.status;
+  $("#cancelBtn").hidden = !running;
+  $("#rerunBtn").hidden = running;
+  $("#deleteBtn").hidden = running;
+  renderProgress();
+
+  const open = result.hosts.reduce((n, h) => n + openPorts(h).length, 0);
+  const elapsed = s.finished ? s.finished - s.started : Date.now() / 1000 - s.started;
+  const stats = [
+    [result.hosts_up ?? result.hosts.length, running ? "Devices found so far" : "Devices up"],
+    [open, "Open ports"],
+    [duration(result.elapsed || elapsed), running ? "Elapsed" : "Duration"],
+    [s.preset_name, "Scan type"],
+  ];
+  $("#stats").innerHTML = stats.map(([v, l]) =>
+    `<div class="card stat"><div class="stat-value ${typeof v === "number" ? "" : "text"}">${esc(v)}</div><div class="stat-label">${esc(l)}</div></div>`).join("") +
+    (s.error ? `<div class="card stat" style="grid-column:1/-1;color:var(--danger)">${esc(s.error)}</div>` : "");
+
+  renderHosts(result, running);
+  renderPorts(result);
+  renderMap(result);
+  const out = $("#output");
+  const atBottom = out.scrollHeight - out.scrollTop - out.clientHeight < 40;
+  out.textContent = s.log.join("\n");
+  if (atBottom) out.scrollTop = out.scrollHeight;
+  selectTab(state.tab);
+}
+
+function renderProgress() {
+  const s = state.current;
+  if (!s) return;
+  const wrap = $("#progressWrap");
+  wrap.hidden = s.status !== "running";
+  wrap.classList.toggle("indeterminate", s.progress <= 0);
+  $("#progressBar").style.width = s.progress > 0 ? `${s.progress}%` : "";
+}
+
+function emptyBox(icon, text) {
+  return `<div class="empty card"><div class="empty-icon">${icon}</div>${esc(text)}</div>`;
+}
+
+function renderHosts(result, running) {
+  const panel = $("#tab-hosts");
+  const expanded = new Set([...panel.querySelectorAll(".host.expanded")].map((el) => el.dataset.ip));
+  const hosts = [...result.hosts].sort((a, b) => ipKey(a.ip).localeCompare(ipKey(b.ip)));
+  if (!hosts.length) {
+    panel.innerHTML = emptyBox(running ? "⏳" : "🔍", running ? "Scanning… devices will appear here as they are found." : "No devices responded.");
+    return;
+  }
+  panel.innerHTML = `<div class="hosts">${hosts.map((h) => {
+    const op = openPorts(h);
+    const tags = [
+      `<span class="tag ${op.length ? "open" : ""}">${op.length} open port${op.length === 1 ? "" : "s"}</span>`,
+      h.vendor ? `<span class="tag">${esc(h.vendor)}</span>` : "",
+      h.os ? `<span class="tag">${esc(h.os.name)} (${esc(h.os.accuracy)}%)</span>` : "",
+    ].join("");
+    const isOpen = expanded.has(h.ip) || hosts.length === 1;
+    return `<div class="card host ${isOpen ? "expanded" : ""}" data-ip="${esc(h.ip)}">
+      <div class="host-head"><span class="chev">▶</span>
+        <span class="host-ip">${esc(h.ip)}</span>
+        <span class="host-name">${esc(h.hostnames.join(", "))}</span>
+        <div class="host-tags">${tags}</div></div>
+      <div class="host-body">${hostDetails(h)}</div></div>`;
+  }).join("")}</div>`;
+}
+
+function hostDetails(h) {
+  const kv = [];
+  if (h.hostnames?.length) kv.push(["Hostname", h.hostnames.join(", ")]);
+  if (h.ipv6 && h.ipv6 !== h.ip) kv.push(["IPv6", h.ipv6]);
+  if (h.mac) kv.push(["MAC", `${h.mac}${h.vendor ? ` (${h.vendor})` : ""}`]);
+  if (h.os) kv.push(["OS guess", `${h.os.name} — ${h.os.accuracy}% sure`]);
+  if (h.distance) kv.push(["Distance", `${h.distance} hop${h.distance > 1 ? "s" : ""}`]);
+  if (h.reason) kv.push(["Detected by", h.reason]);
+  for (const x of h.hidden_ports || []) kv.push(["Not shown", `${x.count} ${x.state} ports`]);
+  if (h.trace?.length) kv.push(["Route", h.trace.map((t) => t.ip).join(" → ")]);
+  let html = kv.length ? `<dl class="kv">${kv.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("")}</dl>` : "";
+  if (h.ports.length) {
+    html += `<div class="table-wrap"><table class="table"><thead><tr><th>Port</th><th>State</th><th>Service</th><th>Software / version</th></tr></thead><tbody>${
+      h.ports.map((p) => `<tr><td class="mono">${p.port}/${esc(p.proto)}</td>
+        <td><span class="state ${esc(p.state)}">${esc(p.state)}</span></td>
+        <td>${esc(p.service)}</td>
+        <td>${esc(p.product)}${p.scripts.map((sc) => `<div class="script-out"><b>${esc(sc.id)}</b>: ${esc(sc.output)}</div>`).join("")}</td></tr>`).join("")
+    }</tbody></table></div>`;
+  } else if (!h.live) {
+    html += `<p class="muted small">No open ports listed for this device${h.hidden_ports?.length ? "" : " (port scan not part of this scan type)"}.</p>`;
+  }
+  for (const sc of h.scripts || []) html += `<div class="script-out"><b>${esc(sc.id)}</b>: ${esc(sc.output)}</div>`;
+  return html;
+}
+
+$("#tab-hosts").addEventListener("click", (e) => {
+  const head = e.target.closest(".host-head");
+  if (head) head.parentElement.classList.toggle("expanded");
+});
+
+function renderPorts(result) {
+  const q = $("#portFilter").value.trim().toLowerCase();
+  const rows = [];
+  for (const h of result.hosts) for (const p of h.ports) {
+    const text = `${h.ip} ${h.hostnames.join(" ")} ${p.port} ${p.proto} ${p.state} ${p.service} ${p.product}`.toLowerCase();
+    if (!q || text.includes(q)) rows.push({ h, p });
+  }
+  rows.sort((a, b) => ipKey(a.h.ip).localeCompare(ipKey(b.h.ip)) || a.p.port - b.p.port);
+  $("#portTable").innerHTML = rows.length
+    ? `<thead><tr><th>Device</th><th>Port</th><th>State</th><th>Service</th><th>Software / version</th></tr></thead><tbody>${
+      rows.map(({ h, p }) => `<tr><td class="mono">${esc(h.ip)}${h.hostnames[0] ? `<div class="muted small">${esc(h.hostnames[0])}</div>` : ""}</td>
+        <td class="mono">${p.port}/${esc(p.proto)}</td><td><span class="state ${esc(p.state)}">${esc(p.state)}</span></td>
+        <td>${esc(p.service)}</td><td>${esc(p.product)}</td></tr>`).join("")}</tbody>`
+    : `<tbody><tr><td class="empty">${q ? "Nothing matches the filter." : "No ports found in this scan."}</td></tr></tbody>`;
+}
+$("#portFilter").addEventListener("input", () => state.current && renderPorts(state.current.result || liveResult(state.current.log)));
+
+// ------------------------------------------------------------------ network map
+
+function renderMap(result) {
+  const svg = $("#map");
+  const hosts = [...result.hosts].sort((a, b) => ipKey(a.ip).localeCompare(ipKey(b.ip)));
+  if (!hosts.length) {
+    svg.setAttribute("viewBox", "0 0 400 120");
+    svg.innerHTML = `<text x="200" y="64" text-anchor="middle" fill="var(--muted)" font-size="14">No devices to draw yet.</text>`;
+    return;
+  }
+  // Place devices on rings around the scanner: ring k holds up to 8*k nodes.
+  const placed = [];
+  let ring = 1, idx = 0;
+  while (idx < hosts.length) {
+    const cap = 8 * ring;
+    const n = Math.min(cap, hosts.length - idx);
+    const r = 140 + (ring - 1) * 100;
+    const offset = ring % 2 ? 0 : Math.PI / n;
+    for (let i = 0; i < n; i++) {
+      const a = -Math.PI / 2 + offset + (2 * Math.PI * i) / n;
+      placed.push({ h: hosts[idx + i], x: r * Math.cos(a), y: r * Math.sin(a) });
+    }
+    idx += n; ring++;
+  }
+  const R = 140 + (ring - 2) * 100 + 80;
+  svg.setAttribute("viewBox", `${-R} ${-R} ${2 * R} ${2 * R}`);
+  const showSub = hosts.length <= 40;
+  const links = placed.map((p) => `<line class="link" x1="0" y1="0" x2="${p.x.toFixed(1)}" y2="${p.y.toFixed(1)}"/>`).join("");
+  const nodes = placed.map(({ h, x, y }) => {
+    const n = openPorts(h).length;
+    const color = n === 0 ? "var(--node-none)" : n < 5 ? "var(--node-some)" : "var(--node-many)";
+    const rad = 10 + Math.min(n, 10);
+    const name = h.hostnames[0] || h.vendor || "";
+    const tip = [h.ip, name, `${n} open port${n === 1 ? "" : "s"}`,
+      ...openPorts(h).slice(0, 12).map((p) => `  ${p.port}/${p.proto} ${p.service}`)].filter(Boolean).join("\n");
+    return `<g class="node" data-ip="${esc(h.ip)}" transform="translate(${x.toFixed(1)},${y.toFixed(1)})">
+      <title>${esc(tip)}</title>
+      <circle r="${rad}" fill="${color}"/>
+      <text y="${rad + 14}" text-anchor="middle">${esc(h.ip)}</text>
+      ${showSub && name ? `<text class="sub" y="${rad + 27}" text-anchor="middle">${esc(name.length > 22 ? name.slice(0, 21) + "…" : name)}</text>` : ""}
+    </g>`;
+  }).join("");
+  const center = `<g class="node center"><circle r="34"/><text text-anchor="middle" y="-2">Scanner</text>
+    <text class="sub" text-anchor="middle" y="13">${hosts.length} device${hosts.length === 1 ? "" : "s"}</text></g>`;
+  svg.innerHTML = links + center + nodes;
+}
+
+$("#map").addEventListener("click", (e) => {
+  const g = e.target.closest(".node[data-ip]");
+  if (!g) return;
+  selectTab("hosts");
+  const card = [...document.querySelectorAll(".host")].find((el) => el.dataset.ip === g.dataset.ip);
+  if (card) {
+    card.classList.add("expanded", "flash");
+    card.scrollIntoView({ behavior: "smooth", block: "center" });
+    setTimeout(() => card.classList.remove("flash"), 1300);
+  }
+});
+
+// ------------------------------------------------------------------ tabs & actions
+
+function selectTab(name) {
+  if (!document.getElementById(`tab-${name}`)) name = "hosts";
+  state.tab = name;
+  if (state.current) history.replaceState(null, "", `#/scan/${state.current.id}/${name}`);
+  document.querySelectorAll(".tab").forEach((t) => t.classList.toggle("active", t.dataset.tab === name));
+  document.querySelectorAll(".tab-panel").forEach((p) => { p.hidden = p.id !== `tab-${name}`; });
+  if (name === "output") { const o = $("#output"); o.scrollTop = o.scrollHeight; }
+}
+document.querySelectorAll(".tab").forEach((t) => t.addEventListener("click", () => selectTab(t.dataset.tab)));
+
+$("#cancelBtn").onclick = async () => {
+  if (!state.current) return;
+  try { await api(`/api/scans/${state.current.id}/cancel`, { method: "POST", body: "{}" }); }
+  catch (ex) { alert(ex.message); }
+};
+$("#rerunBtn").onclick = () => state.current && startScan(state.current.target, state.current.preset);
+$("#deleteBtn").onclick = async () => {
+  if (!state.current || !confirm("Delete this scan from history?")) return;
+  try { await api(`/api/scans/${state.current.id}`, { method: "DELETE" }); }
+  catch (ex) { alert(ex.message); return; }
+  await loadHistory();
+  location.hash = "#/new";
+};
+$("#newScanBtn").onclick = () => { location.hash = "#/new"; };
+
+$("#quitBtn").onclick = async () => {
+  const running = state.scans.some((x) => x.status === "running");
+  if (!confirm(running ? "Quit nmap-gui? The running scan will be stopped." : "Quit nmap-gui?")) return;
+  closeEvents();
+  try { await api("/api/quit", { method: "POST", body: "{}" }); } catch (_) { /* already gone */ }
+  clearInterval(state.historyTimer);
+  document.querySelector(".layout").innerHTML = `<main class="main">${emptyBox("👋",
+    "nmap-gui has stopped. You can close this tab. Start it again from your app menu or with: nmap-gui")}</main>`;
+};
+
+// Phone layout: slide-out history panel
+$("#menuBtn").onclick = () => document.body.classList.toggle("nav-open");
+$("#scrim").onclick = () => document.body.classList.remove("nav-open");
+
+// ------------------------------------------------------------------ routing & start-up
+
+function route() {
+  document.body.classList.remove("nav-open");
+  const m = location.hash.match(/^#\/scan\/([\w-]+)(?:\/(\w+))?$/);
+  if (!m) return showNew();
+  state.tab = m[2] || "hosts";
+  if (state.current && state.current.id === m[1]) selectTab(state.tab); else showScan(m[1]);
+}
+
+async function init() {
+  initTheme();
+  state.info = await api("/api/info");
+  $("#nmapVersion").textContent = state.info.nmap ? `nmap ${state.info.nmap}` : "nmap not found";
+  const rc = $("#rootChip");
+  rc.hidden = false;
+  rc.textContent = state.info.root ? "admin mode" : "normal user";
+  rc.className = `chip ${state.info.root ? "warn" : "ok"}`;
+  rc.title = state.info.root ? "Running with sudo: all scan types available" : "Some scan types need sudo";
+  renderPresets();
+  await loadHistory();
+  window.addEventListener("hashchange", route);
+  route();
+  // Keep the history list fresh (status dots, "x min ago").
+  // (also tells the server a page is still open, so it doesn't stop when idle)
+  state.historyTimer = setInterval(loadHistory, 10000);
+}
+
+init().catch((e) => {
+  document.querySelector(".main").innerHTML = emptyBox("⚠️", `Could not reach the nmap-gui server: ${e.message}`);
+});
+
+
+====================================================================================================
+FILE: static/compare.js   (344 lines)
+====================================================================================================
+/*
+ * nmap-gui - a modern browser interface for the nmap network scanner
+ * Copyright (C) 2026 Denis (https://github.com/agent-denis)
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ * This program is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either version 3
+ * of the License, or (at your option) any later version. It comes WITHOUT ANY WARRANTY.
+ * See the LICENSE file or <https://www.gnu.org/licenses/>.
+ */
+// nmap-gui: "Changes" tab - compares two scans and builds an email note.
+// Uses helpers from app.js ($, esc, api, state).
+"use strict";
+
+const MAILTO_LIMIT = 1900;   // longer mailto: links break in some email programs
+const PLACEHOLDERS = {
+  target: "what was scanned",
+  old_time: "date & time of the earlier scan",
+  new_time: "date & time of this scan",
+  summary: "one-line summary of the changes",
+  new_count: "number of new devices",
+  new_devices: "list of new devices with details",
+  missing_count: "number of devices not seen",
+  missing_devices: "list of devices not seen",
+  port_changes: "opened/closed ports on known devices",
+  other_changes: "changed IP, MAC or hostname",
+  warnings: "notes about the comparison (if any)",
+};
+
+const cmp = { settings: null, defaults: null, diff: null, candidates: [] };
+
+// ------------------------------------------------------------------ text helpers
+
+function fmtTime(ts) {
+  return new Date(ts * 1000).toLocaleString(undefined, {
+    weekday: "short", day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit",
+  });
+}
+
+const plural = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
+const hostLabel = (h) => h.ip + (h.hostnames?.length ? ` (${h.hostnames.join(", ")})` : "");
+const portText = (p) => `${p.port}/${p.proto}${p.service ? " " + p.service : ""}${p.product ? ` (${p.product})` : ""}`;
+
+function deviceDetails(h, portsScanned) {
+  const bits = [];
+  if (h.mac) bits.push(`MAC ${h.mac}${h.vendor ? ` (${h.vendor})` : ""}`);
+  if (h.os) bits.push(`OS guess ${h.os.name}`);
+  if (portsScanned) {
+    const open = h.ports.filter((p) => p.state === "open");
+    bits.push(open.length ? `open ports: ${open.map(portText).join(", ")}` : "no open ports found");
+  }
+  return bits;
+}
+
+function summaryLine(d) {
+  const parts = [];
+  if (d.new_hosts.length) parts.push(plural(d.new_hosts.length, "new device"));
+  if (d.missing_hosts.length) parts.push(`${plural(d.missing_hosts.length, "device")} not seen`);
+  if (d.port_changes.length) parts.push(`port changes on ${plural(d.port_changes.length, "device")}`);
+  if (d.other_changes.length) parts.push(plural(d.other_changes.length, "other change"));
+  return parts.length ? parts.join(", ") + "." : "No changes found.";
+}
+
+const totalChanges = (d) => d.new_hosts.length + d.missing_hosts.length + d.port_changes.length + d.other_changes.length;
+
+function textList(items, fn) {
+  return items.length ? items.map(fn).join("\n") : "  (none)";
+}
+
+function placeholderValues(d) {
+  const ports = d.ports_compared;
+  return {
+    target: d.new.target,
+    old_time: fmtTime(d.old.started),
+    new_time: fmtTime(d.new.started),
+    summary: summaryLine(d),
+    new_count: String(d.new_hosts.length),
+    missing_count: String(d.missing_hosts.length),
+    new_devices: textList(d.new_hosts, (h) =>
+      [`  • ${hostLabel(h)}`, ...deviceDetails(h, ports).map((b) => `      ${b}`)].join("\n")),
+    missing_devices: textList(d.missing_hosts, (h) =>
+      `  • ${hostLabel(h)}${h.mac ? ` - MAC ${h.mac}${h.vendor ? ` (${h.vendor})` : ""}` : ""}`),
+    port_changes: ports
+      ? textList(d.port_changes, (c) => [`  • ${hostLabel(c)}`,
+        ...c.opened.map((p) => `      newly open: ${portText(p)}`),
+        ...c.closed.map((p) => `      now closed: ${portText(p)}`),
+        ...c.changed.map((x) => `      software changed on ${x.port}/${x.proto}: ${x.old} -> ${x.new}`)].join("\n"))
+      : "  (not compared - one scan only looked for devices)",
+    other_changes: textList(d.other_changes, (c) => `  • ${hostLabel(c)}: ${c.what} changed from ${c.old} to ${c.new}`),
+    warnings: d.warnings.length ? "\nPlease note:\n" + d.warnings.map((w) => `  - ${w}`).join("\n") + "\n" : "",
+  };
+}
+
+const fillTemplate = (tpl, vals) => tpl.replace(/\{(\w+)\}/g, (m, k) => (k in vals ? vals[k] : m));
+
+// ------------------------------------------------------------------ choosing what to compare
+
+function compareCandidates(cur) {
+  const usable = state.scans.filter((s) => s.id !== cur.id && s.status !== "running" && s.hosts_up != null);
+  const same = usable.filter((s) => s.target === cur.target);
+  const other = usable.filter((s) => s.target !== cur.target);
+  return { same, other };
+}
+
+function defaultCandidate(cur, same) {
+  return same.find((s) => s.started < cur.started) || same[0] || null;
+}
+
+// Called by app.js whenever a scan is opened.
+async function onScanShown(cur) {
+  const badge = $("#changesBadge");
+  const sel = $("#compareWith");
+  cmp.diff = null;
+  badge.hidden = true;
+  $("#emailCard").hidden = true;
+  if (cur.status === "running" || !cur.result) {
+    sel.parentElement.hidden = true;
+    $("#diffView").innerHTML = emptyBox("⏳", cur.status === "running"
+      ? "Changes can be compared when the scan has finished."
+      : "This scan has no results to compare.");
+    return;
+  }
+  const { same, other } = compareCandidates(cur);
+  const opt = (s) => `<option value="${esc(s.id)}">${esc(fmtTime(s.started))} · ${esc(s.preset_name)}${
+    s.target !== cur.target ? ` · ${esc(s.target)}` : ""}${s.started > cur.started ? " (newer)" : ""}</option>`;
+  sel.innerHTML = (same.length ? `<optgroup label="Same target (${esc(cur.target)})">${same.map(opt).join("")}</optgroup>` : "") +
+    (other.length ? `<optgroup label="Other targets">${other.map(opt).join("")}</optgroup>` : "");
+  const def = defaultCandidate(cur, same);
+  if (!def) {
+    sel.parentElement.hidden = !other.length;
+    if (other.length) sel.insertAdjacentHTML("afterbegin", `<option value="" selected>Choose a scan…</option>`);
+    $("#diffView").innerHTML = emptyBox("🕒",
+      "There is no other scan of this target yet. Run the same scan again later (“Run again”), " +
+      "then open this tab to see what changed.");
+    return;
+  }
+  sel.parentElement.hidden = false;
+  sel.value = def.id;
+  await loadDiff(cur, def.id);
+}
+
+$("#compareWith").addEventListener("change", (e) => {
+  if (state.current && e.target.value) loadDiff(state.current, e.target.value);
+});
+
+async function loadDiff(cur, otherId) {
+  let d;
+  try {
+    d = await api(`/api/compare?old=${encodeURIComponent(otherId)}&new=${encodeURIComponent(cur.id)}`);
+  } catch (ex) {
+    $("#diffView").innerHTML = emptyBox("⚠️", ex.message);
+    return;
+  }
+  if (state.current !== cur) return;   // user moved on meanwhile
+  cmp.diff = d;
+  const n = totalChanges(d);
+  const badge = $("#changesBadge");
+  badge.hidden = false;
+  badge.textContent = n;
+  badge.classList.toggle("zero", n === 0);
+  renderDiff(d);
+  fillEmail();
+}
+
+// ------------------------------------------------------------------ rendering the comparison
+
+function renderDiff(d) {
+  const swapped = d.new.id !== state.current.id;
+  const portsHtml = (c) => [
+    ...c.opened.map((p) => `<div><span class="plus">+ open</span> ${esc(portText(p))}</div>`),
+    ...c.closed.map((p) => `<div><span class="minus">− closed</span> ${esc(portText(p))}</div>`),
+    ...c.changed.map((x) => `<div>software on ${x.port}/${esc(x.proto)}: ${esc(x.old)} → ${esc(x.new)}</div>`),
+  ].join("");
+  const section = (cls, title, items, fn) => items.length
+    ? `<div class="card diff-section ${cls}"><h3>${esc(title)} (${items.length})</h3><ul>${items.map(fn).join("")}</ul></div>` : "";
+  const label = (h) => `<span class="mono">${esc(h.ip)}</span>${h.hostnames?.length ? ` <span class="muted">${esc(h.hostnames.join(", "))}</span>` : ""}`;
+
+  $("#diffView").innerHTML = `
+    <p class="diff-times muted">From <b>${esc(fmtTime(d.old.started))}</b> (${esc(d.old.preset_name)})
+      to <b>${esc(fmtTime(d.new.started))}</b> (${esc(d.new.preset_name)})${swapped ? " — the scan you picked is newer, so it is treated as the later one" : ""}.</p>
+    ${d.warnings.length ? `<ul class="card warn-list small">${d.warnings.map((w) => `<li>${esc(w)}</li>`).join("")}</ul>` : ""}
+    ${totalChanges(d) === 0 ? emptyBox("✅", "No changes: the same devices and open ports were found in both scans.") : ""}
+    ${section("new", "New devices", d.new_hosts, (h) =>
+      `<li>${label(h)}<div class="small muted">${esc(deviceDetails(h, d.ports_compared).join(" · "))}</div></li>`)}
+    ${section("missing", "Not seen in the later scan", d.missing_hosts, (h) =>
+      `<li>${label(h)}${h.vendor ? ` <span class="small muted">${esc(h.vendor)}</span>` : ""}</li>`)}
+    ${section("ports", "Port changes on known devices", d.port_changes, (c) => `<li>${label(c)}<div class="small">${portsHtml(c)}</div></li>`)}
+    ${section("other", "Other changes", d.other_changes, (c) =>
+      `<li>${label(c)}: ${esc(c.what)} <span class="mono small">${esc(c.old)} → ${esc(c.new)}</span></li>`)}
+    ${d.missing_hosts.length ? `<p class="small muted">Phones and laptops often sleep and don't answer, so “not seen” doesn't always mean the device is gone.</p>` : ""}`;
+}
+
+// ------------------------------------------------------------------ email note
+
+function fillEmail() {
+  const d = cmp.diff;
+  if (!d || !cmp.settings) return;
+  const vals = placeholderValues(d);
+  $("#emailCard").hidden = false;
+  $("#mailNotice").hidden = true;
+  if (!$("#mailTo").value) $("#mailTo").value = cmp.settings.recipients;
+  $("#mailSubject").value = fillTemplate(cmp.settings.subject, vals);
+  $("#mailBody").value = fillTemplate(cmp.settings.body, vals);
+}
+
+function notice(msg, warn = false) {
+  const n = $("#mailNotice");
+  n.textContent = msg;
+  n.className = `notice small ${warn ? "warn" : ""}`;
+  n.hidden = false;
+}
+
+function mailtoLink(to, subject, body) {
+  const addr = to.split(/[,;\s]+/).filter(Boolean).map(encodeURIComponent).join(",");
+  const make = (b) => `mailto:${addr}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(b)}`;
+  if (make(body).length <= MAILTO_LIMIT) return { url: make(body), shortened: false };
+  const tail = "\n\n[Shortened - the full list is in the attached report.]\n";
+  const lines = body.split("\n");
+  while (lines.length && make(lines.join("\n") + tail).length > MAILTO_LIMIT) lines.pop();
+  return { url: make(lines.join("\n") + tail), shortened: true };
+}
+
+$("#sendMailBtn").onclick = () => {
+  const { url, shortened } = mailtoLink($("#mailTo").value, $("#mailSubject").value, $("#mailBody").value);
+  if (shortened) {
+    downloadReport();
+    notice("The message was too long for an email link, so it was shortened. The full report was downloaded - " +
+      "please attach it to the email.", true);
+  } else {
+    notice("Opening your email program… If nothing happens, use “Copy text” instead.");
+  }
+  location.href = url;
+};
+
+$("#copyMailBtn").onclick = async () => {
+  const text = `Subject: ${$("#mailSubject").value}\n\n${$("#mailBody").value}`;
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch (_) {
+    const ta = $("#mailBody");
+    ta.select();
+    document.execCommand("copy");
+  }
+  notice("Copied - paste it into any email (subject is on the first line).");
+};
+
+$("#downloadBtn").onclick = () => { downloadReport(); notice("Report downloaded - you can attach it to an email."); };
+
+function downloadReport() {
+  const d = cmp.diff;
+  if (!d) return;
+  const row = (cells) => `<tr>${cells.map((c) => `<td>${esc(c)}</td>`).join("")}</tr>`;
+  const table = (title, head, rows) => rows.length ? `<h2>${esc(title)} (${rows.length})</h2>
+    <table><tr>${head.map((h) => `<th>${esc(h)}</th>`).join("")}</tr>${rows.join("")}</table>` : "";
+  const ports = (h) => h.ports.filter((p) => p.state === "open").map(portText).join(", ");
+  const html = `<!doctype html><html><head><meta charset="utf-8"><title>${esc($("#mailSubject").value)}</title>
+<style>body{font:14px/1.5 system-ui,sans-serif;max-width:960px;margin:32px auto;padding:0 16px;color:#0f172a}
+h1{font-size:22px}h2{font-size:16px;margin-top:28px}table{border-collapse:collapse;width:100%}
+th,td{text-align:left;padding:6px 10px;border-bottom:1px solid #dde3ec;vertical-align:top}
+th{font-size:12px;text-transform:uppercase;color:#5b6b82}.muted{color:#5b6b82}pre{white-space:pre-wrap;background:#f5f7fb;padding:12px;border-radius:8px}</style>
+</head><body>
+<h1>${esc($("#mailSubject").value)}</h1>
+<p>Target <b>${esc(d.new.target)}</b>. Compared the scan on <b>${esc(fmtTime(d.old.started))}</b> (${esc(d.old.preset_name)})
+with the scan on <b>${esc(fmtTime(d.new.started))}</b> (${esc(d.new.preset_name)}).</p>
+<p><b>${esc(summaryLine(d))}</b></p>
+${d.warnings.length ? `<ul>${d.warnings.map((w) => `<li>${esc(w)}</li>`).join("")}</ul>` : ""}
+${table("New devices", ["IP", "Hostname", "MAC", "Vendor", "OS guess", "Open ports"],
+    d.new_hosts.map((h) => row([h.ip, h.hostnames.join(", "), h.mac, h.vendor, h.os?.name || "", d.ports_compared ? ports(h) : "not scanned"])))}
+${table("Devices not seen in the later scan", ["IP", "Hostname", "MAC", "Vendor"],
+    d.missing_hosts.map((h) => row([h.ip, h.hostnames.join(", "), h.mac, h.vendor])))}
+${table("Port changes on known devices", ["IP", "Hostname", "Change", "Port"],
+    d.port_changes.flatMap((c) => [
+      ...c.opened.map((p) => row([c.ip, c.hostnames.join(", "), "newly open", portText(p)])),
+      ...c.closed.map((p) => row([c.ip, c.hostnames.join(", "), "now closed", portText(p)])),
+      ...c.changed.map((x) => row([c.ip, c.hostnames.join(", "), "software changed", `${x.port}/${x.proto}: ${x.old} → ${x.new}`])),
+    ]))}
+${table("Other changes", ["IP", "Hostname", "What", "Before", "After"],
+    d.other_changes.map((c) => row([c.ip, c.hostnames.join(", "), c.what, c.old, c.new])))}
+<h2>Note</h2><pre>${esc($("#mailBody").value)}</pre>
+<p class="muted">Generated by nmap-gui on ${esc(fmtTime(Date.now() / 1000))}.</p>
+</body></html>`;
+  const stamp = new Date(d.new.started * 1000).toISOString().slice(0, 16).replace(/[T:]/g, "-");
+  const name = `network-changes-${d.new.target.replace(/[^\w.-]+/g, "_")}-${stamp}.html`;
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([html], { type: "text/html" }));
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+}
+
+// ------------------------------------------------------------------ template editor
+
+$("#placeholders").innerHTML = Object.entries(PLACEHOLDERS)
+  .map(([k, desc]) => `<button type="button" data-ph="${k}" title="${esc(desc)}">{${k}}</button>`).join("");
+
+// Clicking a placeholder inserts it where the cursor was in subject/message.
+let lastTplField = null;
+["#tplSubject", "#tplBody"].forEach((id) => $(id).addEventListener("focus", (e) => { lastTplField = e.target; }));
+$("#placeholders").addEventListener("mousedown", (e) => e.preventDefault()); // keep focus in the field
+$("#placeholders").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-ph]");
+  if (!b) return;
+  const f = lastTplField || $("#tplBody");
+  const text = `{${b.dataset.ph}}`;
+  const s = f.selectionStart ?? f.value.length, en = f.selectionEnd ?? f.value.length;
+  f.value = f.value.slice(0, s) + text + f.value.slice(en);
+  f.focus();
+  f.selectionStart = f.selectionEnd = s + text.length;
+});
+
+function openTemplate(values) {
+  $("#tplRecipients").value = values.recipients;
+  $("#tplSubject").value = values.subject;
+  $("#tplBody").value = values.body;
+  $("#templateEditor").hidden = false;
+}
+
+$("#editTemplateBtn").onclick = () => {
+  if ($("#templateEditor").hidden) openTemplate(cmp.settings); else $("#templateEditor").hidden = true;
+};
+$("#tplCancel").onclick = () => { $("#templateEditor").hidden = true; };
+$("#tplReset").onclick = () => openTemplate({ ...cmp.defaults, recipients: $("#tplRecipients").value });
+$("#tplSave").onclick = async () => {
+  try {
+    const r = await api("/api/settings", { method: "POST", body: JSON.stringify({
+      recipients: $("#tplRecipients").value.trim(), subject: $("#tplSubject").value, body: $("#tplBody").value,
+    }) });
+    cmp.settings = r.settings;
+  } catch (ex) { alert(ex.message); return; }
+  $("#templateEditor").hidden = true;
+  $("#mailTo").value = cmp.settings.recipients;
+  fillEmail();
+  notice("Template saved. It will be used for every comparison from now on.");
+};
+
+(async () => {
+  try {
+    const r = await api("/api/settings");
+    cmp.settings = r.settings;
+    cmp.defaults = r.defaults;
+    fillEmail();
+  } catch (_) { /* server unreachable: app.js shows the error */ }
+})();
+
+
+====================================================================================================
+FILE: static/index.html   (158 lines)
+====================================================================================================
+<!doctype html>
+<!--
+  nmap-gui - a modern browser interface for the nmap network scanner
+  Copyright (C) 2026 Denis (https://github.com/agent-denis)
+  SPDX-License-Identifier: GPL-3.0-or-later
+  This program is free software: you can redistribute it and/or modify it under the terms of
+  the GNU General Public License as published by the Free Software Foundation, either version 3
+  of the License, or (at your option) any later version. It comes WITHOUT ANY WARRANTY.
+  See the LICENSE file or <https://www.gnu.org/licenses/>.
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>nmap-gui</title>
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/app.css">
+</head>
+<body>
+  <header class="topbar">
+    <button class="icon-btn menu-btn" id="menuBtn" aria-label="Show history">☰</button>
+    <div class="brand"><img src="/icon.svg" alt="" width="26" height="26"><span>nmap<b>gui</b></span></div>
+    <div class="topbar-right">
+      <span class="chip" id="nmapVersion">nmap …</span>
+      <span class="chip" id="rootChip" hidden></span>
+      <button class="icon-btn" id="quitBtn" aria-label="Quit nmap-gui" title="Quit nmap-gui">⏻</button>
+      <button class="icon-btn" id="themeBtn" aria-label="Toggle theme" title="Toggle light/dark">◐</button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <button class="btn primary wide" id="newScanBtn">＋ New scan</button>
+      <div class="sidebar-title">History</div>
+      <ul class="history" id="history"></ul>
+      <p class="muted small empty-history" id="emptyHistory">No scans yet.</p>
+    </aside>
+
+    <main class="main">
+      <!-- New scan form -->
+      <section id="newView" class="view">
+        <h1>New scan</h1>
+        <p class="muted">Only scan networks and computers you own or have permission to scan.</p>
+        <form id="scanForm" class="card form-card" autocomplete="off">
+          <label for="target" class="label">Target</label>
+          <input id="target" class="input mono" placeholder="192.168.1.0/24   or   scanme.nmap.org   or   10.0.0.1-50" required>
+          <div class="examples">
+            <span class="muted small">Try:</span>
+            <button type="button" class="link-btn" data-target="127.0.0.1">127.0.0.1 (this PC)</button>
+            <button type="button" class="link-btn" data-target="192.168.1.0/24">192.168.1.0/24 (home network)</button>
+            <button type="button" class="link-btn" data-target="scanme.nmap.org">scanme.nmap.org (nmap's test server)</button>
+          </div>
+          <div class="label">Scan type</div>
+          <div class="presets" id="presets"></div>
+          <div class="command-preview mono" id="commandPreview"></div>
+          <div class="form-error" id="formError" hidden></div>
+          <button class="btn primary big" type="submit" id="startBtn">▶ Start scan</button>
+        </form>
+      </section>
+
+      <!-- Scan results -->
+      <section id="scanView" class="view" hidden>
+        <div class="scan-head">
+          <div>
+            <h1 id="scanTitle"></h1>
+            <div class="mono muted small" id="scanCommand"></div>
+          </div>
+          <div class="scan-actions">
+            <span class="status" id="scanStatus"></span>
+            <button class="btn" id="rerunBtn">↻ Run again</button>
+            <button class="btn danger" id="cancelBtn">■ Stop</button>
+            <button class="btn ghost" id="deleteBtn" title="Delete from history">🗑</button>
+          </div>
+        </div>
+        <div class="progress" id="progressWrap"><div class="progress-bar" id="progressBar"></div></div>
+
+        <div class="stats" id="stats"></div>
+
+        <nav class="tabs" role="tablist">
+          <button class="tab active" data-tab="hosts">Hosts</button>
+          <button class="tab" data-tab="ports">Ports</button>
+          <button class="tab" data-tab="map">Network map</button>
+          <button class="tab" data-tab="changes">Changes <span class="tab-badge" id="changesBadge" hidden></span></button>
+          <button class="tab" data-tab="output">Raw output</button>
+        </nav>
+
+        <div class="tab-panel" id="tab-hosts"></div>
+        <div class="tab-panel" id="tab-ports" hidden>
+          <input class="input filter" id="portFilter" placeholder="Filter by host, port, service…">
+          <div class="table-wrap"><table class="table" id="portTable"></table></div>
+        </div>
+        <div class="tab-panel" id="tab-map" hidden>
+          <div class="card map-card"><svg id="map" role="img" aria-label="Network map"></svg></div>
+          <div class="legend small muted">
+            <span><i class="dot" style="background:var(--node-none)"></i>no open ports</span>
+            <span><i class="dot" style="background:var(--node-some)"></i>1–4 open</span>
+            <span><i class="dot" style="background:var(--node-many)"></i>5+ open</span>
+            <span>Click a device to see its details.</span>
+          </div>
+        </div>
+        <div class="tab-panel" id="tab-changes" hidden>
+          <div class="compare-bar">
+            <label for="compareWith" class="small muted">Compare this scan with</label>
+            <select id="compareWith" class="input select"></select>
+          </div>
+          <div id="diffView"></div>
+
+          <div class="card email-card" id="emailCard" hidden>
+            <div class="email-head">
+              <h2>Email note</h2>
+              <button type="button" class="link-btn" id="editTemplateBtn">✎ Edit template &amp; default recipients</button>
+            </div>
+
+            <div class="template-editor" id="templateEditor" hidden>
+              <p class="small muted">The note is built from this template. Words in curly brackets are filled in automatically:</p>
+              <div class="placeholders" id="placeholders"></div>
+              <label class="label" for="tplRecipients">Default recipients</label>
+              <input class="input" id="tplRecipients" placeholder="it@example.com, manager@example.com">
+              <label class="label" for="tplSubject">Subject</label>
+              <input class="input" id="tplSubject">
+              <label class="label" for="tplBody">Message</label>
+              <textarea class="input mono" id="tplBody" rows="14"></textarea>
+              <div class="btn-row">
+                <button type="button" class="btn primary" id="tplSave">Save template</button>
+                <button type="button" class="btn" id="tplCancel">Cancel</button>
+                <button type="button" class="btn ghost" id="tplReset">Reset to original wording</button>
+              </div>
+            </div>
+
+            <label class="label" for="mailTo">To</label>
+            <input class="input" id="mailTo" placeholder="it@example.com, manager@example.com">
+            <label class="label" for="mailSubject">Subject</label>
+            <input class="input" id="mailSubject">
+            <label class="label" for="mailBody">Message <span class="muted small">(you can edit it before sending)</span></label>
+            <textarea class="input mono" id="mailBody" rows="18"></textarea>
+            <div class="btn-row">
+              <button type="button" class="btn primary" id="sendMailBtn">✉ Send email</button>
+              <button type="button" class="btn" id="copyMailBtn">⧉ Copy text</button>
+              <button type="button" class="btn" id="downloadBtn">⤓ Download report</button>
+            </div>
+            <div class="notice small" id="mailNotice" hidden></div>
+            <p class="small muted hint">“Send email” opens your email program with everything filled in; you press Send there.
+              Nothing happens? This computer has no email program set up: use “Copy text” and paste into webmail,
+              or attach the downloaded report.</p>
+          </div>
+        </div>
+
+        <div class="tab-panel" id="tab-output" hidden>
+          <pre class="card output mono" id="output"></pre>
+        </div>
+      </section>
+    </main>
+  </div>
+  <div class="scrim" id="scrim"></div>
+  <script src="/app.js"></script>
+  <script src="/compare.js"></script>
+</body>
+</html>
+
+
+====================================================================================================
+FILE: tests/test_compare.py   (150 lines)
+====================================================================================================
+#!/usr/bin/env python3
+# nmap-gui - a modern browser interface for the nmap network scanner
+# Copyright (C) 2026 Denis (https://github.com/agent-denis)
+# SPDX-License-Identifier: GPL-3.0-or-later
+# This program is free software: you can redistribute it and/or modify it under the terms of
+# the GNU General Public License as published by the Free Software Foundation, either version 3
+# of the License, or (at your option) any later version. It comes WITHOUT ANY WARRANTY.
+# See the LICENSE file or <https://www.gnu.org/licenses/>.
+"""Tests for comparing scans and for the email-template settings.
+
+Run:  python3 tests/test_compare.py
+Uses made-up scans in a temporary folder; does not run nmap.
+"""
+import json
+import os
+import subprocess
+import sys
+import tempfile
+import time
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+TMP = tempfile.mkdtemp(prefix="nmap-gui-cmp-")
+os.environ["XDG_DATA_HOME"] = TMP
+sys.path.insert(0, str(ROOT))
+import server  # noqa: E402  (must come after XDG_DATA_HOME is set)
+sys.path.insert(0, str(ROOT / "tests"))
+from test_smoke import free_port, request  # noqa: E402
+
+failed = False
+
+
+def check(cond, msg):
+    global failed
+    print(("  ok    " if cond else "  FAIL  ") + msg)
+    failed |= not cond
+
+
+def port(n, service="", product="", state="open"):
+    return {"port": n, "proto": "tcp", "state": state, "reason": "", "service": service,
+            "product": product, "scripts": []}
+
+
+def host(ip, ports=(), mac="", vendor="", names=()):
+    return {"ip": ip, "ipv6": "", "mac": mac, "vendor": vendor, "hostnames": list(names), "reason": "",
+            "ports": list(ports), "hidden_ports": [], "os": None, "distance": None, "trace": [], "scripts": []}
+
+
+def make_scan(sid, started, hosts, preset="quick", status="done", target="192.168.1.0/24"):
+    d = {"id": sid, "targets": target.split(), "target": target, "preset": preset, "status": status,
+         "started": started, "finished": started + 10, "progress": 100, "log": [], "error": None,
+         "result": {"hosts": hosts, "summary": "", "elapsed": 10, "hosts_up": len(hosts),
+                    "hosts_down": 0, "hosts_total": 256}}
+    path = server.DATA / f"{sid}.json"
+    path.write_text(json.dumps(d))
+    return server.Scan.load(path)
+
+
+def main():
+    server.DATA.mkdir(parents=True, exist_ok=True)
+    t = time.time() - 86400
+
+    old = make_scan("20261116-090000-aaaaaa", t, [
+        host("192.168.1.1", [port(22, "ssh", "OpenSSH 9.5"), port(80, "http")], "AA:00:00:00:00:01", "TP-Link", ["router.lan"]),
+        host("192.168.1.20", [], "AA:00:00:00:00:20", "Apple", ["phone"]),
+        host("192.168.1.30", [port(631, "ipp")], "AA:00:00:00:00:30", "HP", ["printer"]),
+        host("192.168.1.40", [], "AA:00:00:00:00:40", "Intel", ["laptop"]),
+    ])
+    new = make_scan("20261117-090000-bbbbbb", t + 86400, [
+        host("192.168.1.1", [port(22, "ssh", "OpenSSH 9.6"), port(8080, "http-proxy")], "AA:00:00:00:00:01", "TP-Link", ["router.lan"]),
+        host("192.168.1.30", [port(631, "ipp")], "AA:00:00:00:00:99", "Unknown", ["printer"]),
+        host("192.168.1.41", [], "AA:00:00:00:00:40", "Intel", ["laptop"]),       # laptop got a new IP
+        host("192.168.1.77", [port(80, "http", "lighttpd")], "BB:00:00:00:00:77", "Espressif"),  # genuinely new
+    ])
+
+    print("Comparing two scans")
+    d = server.diff_scans(new, old)   # wrong order on purpose: must be sorted by time
+    check(d["old"]["id"] == old.id and d["new"]["id"] == new.id, "older scan is always 'old'")
+    check([h["ip"] for h in d["new_hosts"]] == ["192.168.1.77"], f"new devices: {[h['ip'] for h in d['new_hosts']]}")
+    check([h["ip"] for h in d["missing_hosts"]] == ["192.168.1.20"], f"not seen: {[h['ip'] for h in d['missing_hosts']]}")
+    moved = [c for c in d["other_changes"] if c["what"] == "IP address"]
+    check(len(moved) == 1 and moved[0]["old"] == "192.168.1.40" and moved[0]["new"] == "192.168.1.41",
+          "laptop that changed IP is reported as moved, not new+missing")
+    macs = [c for c in d["other_changes"] if c["what"].startswith("MAC")]
+    check(len(macs) == 1 and macs[0]["ip"] == "192.168.1.30", "different MAC on the printer's IP is reported")
+    pc = {c["ip"]: c for c in d["port_changes"]}
+    r = pc.get("192.168.1.1", {})
+    check([p["port"] for p in r.get("opened", [])] == [8080], "router: 8080 newly open")
+    check([p["port"] for p in r.get("closed", [])] == [80], "router: 80 now closed")
+    check(r.get("changed") and r["changed"][0]["old"] == "OpenSSH 9.5", "router: SSH version change noticed")
+    check("192.168.1.30" not in pc, "printer ports unchanged -> no port change entry")
+    check(d["warnings"] == [], f"no warnings ({d['warnings']})")
+
+    print("Warnings")
+    ping = make_scan("20261117-100000-cccccc", t + 90000, [host("192.168.1.1")], preset="ping")
+    d2 = server.diff_scans(old, ping)
+    check(not d2["ports_compared"] and d2["port_changes"] == [], "ping scan: ports not compared")
+    check(any("only looked for devices" in w for w in d2["warnings"]), "ping scan: warning shown")
+    svc = make_scan("20261117-110000-dddddd", t + 95000, [], preset="services", status="cancelled")
+    d3 = server.diff_scans(old, svc)
+    check(any("different scan types" in w for w in d3["warnings"]), "different presets: warning")
+    check(any("did not finish" in w for w in d3["warnings"]), "cancelled scan: warning")
+    same = server.diff_scans(old, make_scan("20261117-120000-eeeeee", t + 99000,
+                                            json.loads(json.dumps(old.result["hosts"]))))
+    check(not (same["new_hosts"] or same["missing_hosts"] or same["port_changes"] or same["other_changes"]),
+          "identical scans: no changes")
+
+    print("Through the web server")
+    p = free_port()
+    srv = subprocess.Popen([sys.executable, str(ROOT / "server.py"), "--port", str(p), "--no-browser"],
+                           stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
+    try:
+        for _ in range(50):
+            try:
+                request(p, "GET", "/api/info")
+                break
+            except OSError:
+                time.sleep(0.1)
+        st, d = request(p, "GET", f"/api/compare?old={old.id}&new={new.id}")
+        check(st == 200 and len(d["new_hosts"]) == 1, f"GET /api/compare works ({st})")
+        st, _ = request(p, "GET", f"/api/compare?old={old.id}&new={old.id}")
+        check(st == 400, "same scan twice refused")
+        st, _ = request(p, "GET", f"/api/compare?old={old.id}&new=nope")
+        check(st == 404, "unknown scan -> 404")
+        st, _ = request(p, "GET", f"/api/compare?old={old.id}&new={new.id}", host="evil.example.com")
+        check(st == 403, "foreign Host refused")
+        st, s = request(p, "GET", "/api/settings")
+        check(st == 200 and "{new_devices}" in s["settings"]["body"], "default template served")
+        st, s = request(p, "POST", "/api/settings", {"recipients": "it@example.com", "subject": "Hi {target}", "body": "B"})
+        check(st == 200 and s["settings"]["recipients"] == "it@example.com", "template saved")
+        st, s = request(p, "GET", "/api/settings")
+        check(s["settings"]["subject"] == "Hi {target}", "saved template read back")
+        st, _ = request(p, "POST", "/api/settings", {"body": "x" * 30000})
+        check(st == 400, "huge template refused")
+        for path in ("/compare.js",):
+            st, _ = request(p, "GET", path)
+            check(st == 200, f"GET {path}")
+    finally:
+        srv.terminate()
+        srv.wait()
+        err = srv.stderr.read().decode()
+        if err.strip():
+            print("server stderr:\n" + err)
+
+    print("\nRESULT:", "FAILED" if failed else "ALL PASSED")
+    sys.exit(1 if failed else 0)
+
+
+if __name__ == "__main__":
+    main()
+
+
+====================================================================================================
+FILE: tests/test_smoke.py   (167 lines)
+====================================================================================================
+#!/usr/bin/env python3
+# nmap-gui - a modern browser interface for the nmap network scanner
+# Copyright (C) 2026 Denis (https://github.com/agent-denis)
+# SPDX-License-Identifier: GPL-3.0-or-later
+# This program is free software: you can redistribute it and/or modify it under the terms of
+# the GNU General Public License as published by the Free Software Foundation, either version 3
+# of the License, or (at your option) any later version. It comes WITHOUT ANY WARRANTY.
+# See the LICENSE file or <https://www.gnu.org/licenses/>.
+"""End-to-end smoke test: starts the server, scans 127.0.0.1, checks results.
+
+Run:  python3 tests/test_smoke.py
+Scan history goes to a temporary folder, so your real history is untouched.
+"""
+import http.client
+import json
+import os
+import socket
+import subprocess
+import sys
+import tempfile
+import time
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+
+
+def free_port():
+    with socket.socket() as s:
+        s.bind(("127.0.0.1", 0))
+        return s.getsockname()[1]
+
+
+def request(port, method, path, body=None, host=None, ctype="application/json"):
+    c = http.client.HTTPConnection("127.0.0.1", port, timeout=30)
+    headers = {"Host": host or f"127.0.0.1:{port}"}
+    if body is not None:
+        headers["Content-Type"] = ctype
+    c.request(method, path, body=json.dumps(body) if body is not None else None, headers=headers)
+    r = c.getresponse()
+    data = r.read()
+    try:
+        data = json.loads(data)
+    except ValueError:
+        pass
+    return r.status, data
+
+
+def check(cond, msg):
+    print(("  ok    " if cond else "  FAIL  ") + msg)
+    if not cond:
+        global failed
+        failed = True
+
+
+failed = False
+
+
+def main():
+    port = free_port()
+    tmp = tempfile.mkdtemp(prefix="nmap-gui-test-")
+    env = {**os.environ, "XDG_DATA_HOME": tmp}
+    srv = subprocess.Popen([sys.executable, str(ROOT / "server.py"), "--port", str(port), "--no-browser"],
+                           env=env, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
+    try:
+        for _ in range(50):
+            try:
+                request(port, "GET", "/api/info")
+                break
+            except OSError:
+                time.sleep(0.1)
+
+        print("Pages")
+        for path in ("/", "/app.js", "/app.css", "/icon.svg"):
+            st, _ = request(port, "GET", path)
+            check(st == 200, f"GET {path} -> {st}")
+
+        print("Safety checks")
+        st, _ = request(port, "GET", "/api/info", host="evil.example.com")
+        check(st == 403, f"foreign Host header refused ({st})")
+        st, _ = request(port, "POST", "/api/scans", {"target": "127.0.0.1", "preset": "quick"}, ctype="text/plain")
+        check(st == 400, f"non-JSON post refused ({st})")
+        for bad in ["-oN /tmp/x 127.0.0.1", "127.0.0.1;rm -rf ~", "$(id)", ""]:
+            st, d = request(port, "POST", "/api/scans", {"target": bad, "preset": "quick"})
+            check(st == 400, f"bad target {bad!r} refused: {d.get('error') if isinstance(d, dict) else d}")
+        st, _ = request(port, "POST", "/api/scans", {"target": "127.0.0.1", "preset": "nope"})
+        check(st == 400, "unknown preset refused")
+
+        print("Info")
+        st, info = request(port, "GET", "/api/info")
+        check(st == 200 and info["nmap"], f"nmap detected: {info.get('nmap')}")
+        check(len(info["presets"]) == 10, f"{len(info['presets'])} presets")
+
+        print("Scan 127.0.0.1 (quick)")
+        st, s = request(port, "POST", "/api/scans", {"target": "127.0.0.1", "preset": "quick"})
+        check(st == 201 and s["status"] == "running", f"scan started ({st})")
+        sid = s["id"]
+
+        # Read live events until the scan ends.
+        c = http.client.HTTPConnection("127.0.0.1", port, timeout=120)
+        c.request("GET", f"/api/scans/{sid}/events", headers={"Host": f"127.0.0.1:{port}"})
+        r = c.getresponse()
+        events = []
+        while True:
+            line = r.fp.readline().decode()
+            if not line:
+                break
+            if line.startswith("event: "):
+                events.append(line[7:].strip())
+                if events[-1] == "end":
+                    break
+        check("log" in events and "end" in events, f"live events received: {sorted(set(events))}")
+
+        st, full = request(port, "GET", f"/api/scans/{sid}")
+        check(full["status"] == "done", f"status done ({full['status']}, error={full.get('error')})")
+        res = full["result"] or {}
+        check(res.get("hosts_up") == 1, f"1 host up ({res.get('hosts_up')})")
+        hosts = res.get("hosts", [])
+        check(hosts and hosts[0]["ip"] == "127.0.0.1", "host is 127.0.0.1")
+        opened = [p["port"] for h in hosts for p in h["ports"] if p["state"] == "open"]
+        print(f"        open ports on this PC: {opened or 'none'}")
+
+        print("History")
+        st, lst = request(port, "GET", "/api/scans")
+        check(any(x["id"] == sid for x in lst), "scan listed in history")
+        check((Path(tmp) / "nmap-gui/scans" / f"{sid}.json").exists(), "saved to disk")
+
+        print("Stop a running scan")
+        st, s2 = request(port, "POST", "/api/scans", {"target": "127.0.0.1", "preset": "allports"})
+        time.sleep(1)
+        request(port, "POST", f"/api/scans/{s2['id']}/cancel", {})
+        for _ in range(50):
+            _, s2f = request(port, "GET", f"/api/scans/{s2['id']}")
+            if s2f["status"] != "running":
+                break
+            time.sleep(0.1)
+        check(s2f["status"] == "cancelled", f"scan stopped ({s2f['status']})")
+
+        print("Delete")
+        st, _ = request(port, "DELETE", f"/api/scans/{s2['id']}")
+        check(st == 200, "deleted")
+        st, _ = request(port, "GET", f"/api/scans/{s2['id']}")
+        check(st == 404, "gone afterwards")
+
+        print("History survives restart")
+        srv.terminate(); srv.wait()
+        srv = subprocess.Popen([sys.executable, str(ROOT / "server.py"), "--port", str(port), "--no-browser"],
+                               env=env, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
+        for _ in range(50):
+            try:
+                st, lst = request(port, "GET", "/api/scans")
+                break
+            except OSError:
+                time.sleep(0.1)
+        check(any(x["id"] == sid for x in lst), "old scan still there after restart")
+    finally:
+        srv.terminate()
+        srv.wait()
+        err = srv.stderr.read().decode()
+        if err.strip():
+            print("server stderr:\n" + err)
+
+    print("\nRESULT:", "FAILED" if failed else "ALL PASSED")
+    sys.exit(1 if failed else 0)
+
+
+if __name__ == "__main__":
+    main()
+
+
+====================================================================================================
+FILE: tools/export_text.py   (160 lines)
+====================================================================================================
+#!/usr/bin/env python3
+# Copyright (C) 2026 Denis (https://github.com/agent-denis)
+# SPDX-License-Identifier: GPL-3.0-or-later
+"""Plain-text versions of the project for people who prefer (or need) .txt files.
+
+    README.txt                 README.md converted to plain text (committed)
+    nmap-gui-source.txt    every source file in one text file (committed; refresh it before a release)
+
+Usage:
+    python3 tools/export_text.py            # both
+    python3 tools/export_text.py readme     # only README.txt
+    python3 tools/export_text.py source     # only nmap-gui-source.txt
+"""
+import datetime
+import re
+import subprocess
+import sys
+import textwrap
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+WIDTH = 80
+
+
+# --------------------------------------------------------------------------- README.md -> README.txt
+def _inline(text: str) -> str:
+    text = re.sub(r"!\[([^\]]*)\]\(([^)]+)\)", r"[Screenshot: \1 – \2]", text)
+    text = re.sub(r"\[([^\]]+)\]\(#[^)]*\)", r"\1", text)                       # links inside the README
+    text = re.sub(r"\[`?([^\]`]+)`?\]\(([^)]+)\)",
+                  lambda m: m.group(1) if m.group(1) == m.group(2) else f"{m.group(1)} ({m.group(2)})", text)
+    text = re.sub(r"\*\*([^*]+)\*\*", r"\1", text)
+    text = re.sub(r"(?<![\w*])\*([^*\n]+)\*(?![\w*])", r"\1", text)
+    text = re.sub(r"`([^`]+)`", r"\1", text)
+    return text
+
+
+def _table(rows: list[str]) -> list[str]:
+    cells = [[_inline(c.strip()) for c in r.strip().strip("|").split("|")] for r in rows]
+    cells = [r for r in cells if not all(re.fullmatch(r":?-+:?", c) for c in r)]
+    head, body = cells[0], cells[1:]
+    widths = [max(len(r[i]) for r in cells if i < len(r)) for i in range(len(head))]
+    if sum(widths) + 3 * len(widths) <= WIDTH:
+        line = lambda r: "  " + "   ".join(c.ljust(w) for c, w in zip(r, widths)).rstrip()
+        return [line(head), "  " + "   ".join("-" * w for w in widths)] + [line(r) for r in body]
+    out = []                                          # too wide for columns: one block per row
+    for r in body:
+        extra = "; ".join(f"{h.lower()}: {c}" for h, c in zip(head[2:], r[2:]) if c)
+        text = f"{r[0]}: {r[1]}" + (f" ({extra})" if extra else "")
+        out += textwrap.wrap(text, WIDTH, initial_indent="  - ", subsequent_indent="    ")
+    return out
+
+
+def readme_text(md: str) -> str:
+    head, md = md.split("\n", 1)
+    title = head.lstrip("# ").strip()
+    intro, md = md.strip("\n").split("\n\n", 1)
+    out = [title.upper(), "=" * len(title), ""] + textwrap.wrap(_inline(" ".join(intro.split())), WIDTH) + [""]
+    lines = md.splitlines()
+    i = 0
+    para: list[str] = []
+
+    def flush():
+        if para:
+            text = _inline(" ".join(s.strip() for s in para))
+            m = re.match(r"^(\s*)(- |\d+\. )(.*)", para[0])
+            if m:
+                ind = " " * (2 + len(m.group(2)))
+                out.extend(textwrap.wrap(_inline(" ".join([m.group(3)] + [s.strip() for s in para[1:]])), WIDTH,
+                                         initial_indent="  " + m.group(2), subsequent_indent=ind))
+            else:
+                out.extend(textwrap.wrap(text, WIDTH))
+            para.clear()
+
+    while i < len(lines):
+        line = lines[i]
+        if line.startswith("```"):
+            flush()
+            i += 1
+            while i < len(lines) and not lines[i].startswith("```"):
+                out.append("    " + lines[i])
+                i += 1
+            out.append("")
+        elif line.startswith("## Contents"):
+            flush()
+            i += 1
+            while i < len(lines) and not lines[i].startswith("## "):   # the link list only makes sense on GitHub
+                i += 1
+            continue
+        elif line.startswith("## "):
+            flush()
+            head = _inline(line[3:]).upper()
+            out += ["", head, "-" * len(head), ""]
+        elif line.startswith("### "):
+            flush()
+            head = _inline(line[4:])
+            out += [head, "~" * len(head), ""]
+        elif line.startswith("|"):
+            flush()
+            rows = []
+            while i < len(lines) and lines[i].startswith("|"):
+                rows.append(lines[i])
+                i += 1
+            out += _table(rows) + [""]
+            continue
+        elif line.startswith(">"):
+            flush()
+            out.extend(textwrap.wrap(_inline(line.lstrip("> ")), WIDTH, initial_indent="  | ", subsequent_indent="  | "))
+        elif not line.strip():
+            flush()
+            if out and out[-1] != "":
+                out.append("")
+        elif re.match(r"^\s*(- |\d+\. )", line):
+            flush()
+            para.append(line)
+        else:
+            para.append(line)
+        i += 1
+    flush()
+    text = "\n".join(out)
+    text = re.sub(r"\n{3,}", "\n\n", text).strip() + "\n"
+    return text + "\n(Plain-text version of README.md, made by tools/export_text.py.)\n"
+
+
+def write_readme():
+    (ROOT / "README.txt").write_text(readme_text((ROOT / "README.md").read_text(encoding="utf-8")), encoding="utf-8")
+    print("wrote README.txt")
+
+
+# --------------------------------------------------------------------------- source code export
+SKIP = re.compile(r"^(docs/screenshots/|Screenshots/|LICENSE$|README\.txt$)|\.(png|svg)$")
+
+
+def write_source():
+    files = subprocess.run(["git", "ls-files", "-co", "--exclude-standard"], cwd=ROOT, capture_output=True,
+                           text=True, check=True).stdout.split()
+    files = sorted(f for f in files if not SKIP.search(f) and f != "nmap-gui-source.txt" and (ROOT / f).is_file())
+    texts = {f: (ROOT / f).read_text(encoding="utf-8") for f in files}
+    count = {f: len(t.splitlines()) for f, t in texts.items()}
+    version = re.search(r'__version__ = "(.*)"', texts["server.py"]).group(1)
+    out = ["NMAP-GUI – SOURCE CODE",
+           f"Version {version} · exported {datetime.datetime.now():%Y-%m-%d %H:%M}",
+           "Licence: GNU General Public License v3.0 or later (the full text is in LICENSE in the repository)",
+           "Homepage: https://github.com/agent-denis/nmap-gui",
+           f"{len(files)} files, {sum(count.values())} lines. Not included: the LICENSE text, screenshots and icons.",
+           "", "FILES"]
+    out += [f"  {f:<64}{count[f]:>7} lines" for f in files]
+    out += ["", ""]
+    bar = "=" * 100
+    for f in files:
+        out += [bar, f"FILE: {f}   ({count[f]} lines)", bar, texts[f].rstrip("\n"), "", ""]
+    (ROOT / "nmap-gui-source.txt").write_text("\n".join(out) + "\n", encoding="utf-8")
+    print(f"wrote nmap-gui-source.txt ({len(files)} files, {sum(count.values())} lines)")
+
+
+if __name__ == "__main__":
+    what = sys.argv[1] if len(sys.argv) > 1 else "all"
+    if what in ("all", "readme"):
+        write_readme()
+    if what in ("all", "source"):
+        write_source()
+
+
+====================================================================================================
+FILE: uninstall.sh   (39 lines)
+====================================================================================================
+#!/usr/bin/env bash
+# Copyright (C) 2026 Denis (https://github.com/agent-denis)
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Remove nmap-gui installed by install.sh.
+#
+#   ./uninstall.sh            remove the program, command and menu entry (keeps scan history and settings)
+#   ./uninstall.sh --purge    also delete scan history and settings
+set -euo pipefail
+
+PURGE=0
+[ "${1:-}" = "--purge" ] && PURGE=1
+
+DATA="${XDG_DATA_HOME:-$HOME/.local/share}"
+case "$DATA" in /*) ;; *) DATA="$HOME/.local/share" ;; esac
+BASE="$DATA/nmap-gui"
+MANIFEST="$BASE/installed-files.txt"
+
+# stop it if it is running
+command -v nmap-gui >/dev/null 2>&1 && nmap-gui --stop >/dev/null 2>&1 || true
+
+if [ -f "$MANIFEST" ]; then
+    while IFS= read -r f; do
+        # only remove files inside the home folder that install.sh put there
+        case "$f" in "$HOME"/*) rm -f -- "$f" ;; esac
+    done < "$MANIFEST"
+    rm -f "$MANIFEST"
+fi
+rm -rf "$BASE/app" "$BASE/app.new"
+touch "$DATA/icons/hicolor" 2>/dev/null || true
+command -v update-desktop-database >/dev/null 2>&1 && update-desktop-database -q "$DATA/applications" 2>/dev/null || true
+
+if [ "$PURGE" -eq 1 ]; then
+    rm -rf "$BASE"
+    echo "nmap-gui removed, including scan history and settings."
+else
+    rmdir "$BASE" 2>/dev/null || true
+    echo "nmap-gui removed. Scan history and settings are kept in $BASE"
+    echo "(delete them with: ./uninstall.sh --purge)"
+fi
+
+

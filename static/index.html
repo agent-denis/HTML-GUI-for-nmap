@@ -1,0 +1,158 @@
+<!doctype html>
+<!--
+  nmap-gui - a modern browser interface for the nmap network scanner
+  Copyright (C) 2026 Denis (https://github.com/agent-denis)
+  SPDX-License-Identifier: GPL-3.0-or-later
+  This program is free software: you can redistribute it and/or modify it under the terms of
+  the GNU General Public License as published by the Free Software Foundation, either version 3
+  of the License, or (at your option) any later version. It comes WITHOUT ANY WARRANTY.
+  See the LICENSE file or <https://www.gnu.org/licenses/>.
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>nmap-gui</title>
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/app.css">
+</head>
+<body>
+  <header class="topbar">
+    <button class="icon-btn menu-btn" id="menuBtn" aria-label="Show history">☰</button>
+    <div class="brand"><img src="/icon.svg" alt="" width="26" height="26"><span>nmap<b>gui</b></span></div>
+    <div class="topbar-right">
+      <span class="chip" id="nmapVersion">nmap …</span>
+      <span class="chip" id="rootChip" hidden></span>
+      <button class="icon-btn" id="quitBtn" aria-label="Quit nmap-gui" title="Quit nmap-gui">⏻</button>
+      <button class="icon-btn" id="themeBtn" aria-label="Toggle theme" title="Toggle light/dark">◐</button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <button class="btn primary wide" id="newScanBtn">＋ New scan</button>
+      <div class="sidebar-title">History</div>
+      <ul class="history" id="history"></ul>
+      <p class="muted small empty-history" id="emptyHistory">No scans yet.</p>
+    </aside>
+
+    <main class="main">
+      <!-- New scan form -->
+      <section id="newView" class="view">
+        <h1>New scan</h1>
+        <p class="muted">Only scan networks and computers you own or have permission to scan.</p>
+        <form id="scanForm" class="card form-card" autocomplete="off">
+          <label for="target" class="label">Target</label>
+          <input id="target" class="input mono" placeholder="192.168.1.0/24   or   scanme.nmap.org   or   10.0.0.1-50" required>
+          <div class="examples">
+            <span class="muted small">Try:</span>
+            <button type="button" class="link-btn" data-target="127.0.0.1">127.0.0.1 (this PC)</button>
+            <button type="button" class="link-btn" data-target="192.168.1.0/24">192.168.1.0/24 (home network)</button>
+            <button type="button" class="link-btn" data-target="scanme.nmap.org">scanme.nmap.org (nmap's test server)</button>
+          </div>
+          <div class="label">Scan type</div>
+          <div class="presets" id="presets"></div>
+          <div class="command-preview mono" id="commandPreview"></div>
+          <div class="form-error" id="formError" hidden></div>
+          <button class="btn primary big" type="submit" id="startBtn">▶ Start scan</button>
+        </form>
+      </section>
+
+      <!-- Scan results -->
+      <section id="scanView" class="view" hidden>
+        <div class="scan-head">
+          <div>
+            <h1 id="scanTitle"></h1>
+            <div class="mono muted small" id="scanCommand"></div>
+          </div>
+          <div class="scan-actions">
+            <span class="status" id="scanStatus"></span>
+            <button class="btn" id="rerunBtn">↻ Run again</button>
+            <button class="btn danger" id="cancelBtn">■ Stop</button>
+            <button class="btn ghost" id="deleteBtn" title="Delete from history">🗑</button>
+          </div>
+        </div>
+        <div class="progress" id="progressWrap"><div class="progress-bar" id="progressBar"></div></div>
+
+        <div class="stats" id="stats"></div>
+
+        <nav class="tabs" role="tablist">
+          <button class="tab active" data-tab="hosts">Hosts</button>
+          <button class="tab" data-tab="ports">Ports</button>
+          <button class="tab" data-tab="map">Network map</button>
+          <button class="tab" data-tab="changes">Changes <span class="tab-badge" id="changesBadge" hidden></span></button>
+          <button class="tab" data-tab="output">Raw output</button>
+        </nav>
+
+        <div class="tab-panel" id="tab-hosts"></div>
+        <div class="tab-panel" id="tab-ports" hidden>
+          <input class="input filter" id="portFilter" placeholder="Filter by host, port, service…">
+          <div class="table-wrap"><table class="table" id="portTable"></table></div>
+        </div>
+        <div class="tab-panel" id="tab-map" hidden>
+          <div class="card map-card"><svg id="map" role="img" aria-label="Network map"></svg></div>
+          <div class="legend small muted">
+            <span><i class="dot" style="background:var(--node-none)"></i>no open ports</span>
+            <span><i class="dot" style="background:var(--node-some)"></i>1–4 open</span>
+            <span><i class="dot" style="background:var(--node-many)"></i>5+ open</span>
+            <span>Click a device to see its details.</span>
+          </div>
+        </div>
+        <div class="tab-panel" id="tab-changes" hidden>
+          <div class="compare-bar">
+            <label for="compareWith" class="small muted">Compare this scan with</label>
+            <select id="compareWith" class="input select"></select>
+          </div>
+          <div id="diffView"></div>
+
+          <div class="card email-card" id="emailCard" hidden>
+            <div class="email-head">
+              <h2>Email note</h2>
+              <button type="button" class="link-btn" id="editTemplateBtn">✎ Edit template &amp; default recipients</button>
+            </div>
+
+            <div class="template-editor" id="templateEditor" hidden>
+              <p class="small muted">The note is built from this template. Words in curly brackets are filled in automatically:</p>
+              <div class="placeholders" id="placeholders"></div>
+              <label class="label" for="tplRecipients">Default recipients</label>
+              <input class="input" id="tplRecipients" placeholder="it@example.com, manager@example.com">
+              <label class="label" for="tplSubject">Subject</label>
+              <input class="input" id="tplSubject">
+              <label class="label" for="tplBody">Message</label>
+              <textarea class="input mono" id="tplBody" rows="14"></textarea>
+              <div class="btn-row">
+                <button type="button" class="btn primary" id="tplSave">Save template</button>
+                <button type="button" class="btn" id="tplCancel">Cancel</button>
+                <button type="button" class="btn ghost" id="tplReset">Reset to original wording</button>
+              </div>
+            </div>
+
+            <label class="label" for="mailTo">To</label>
+            <input class="input" id="mailTo" placeholder="it@example.com, manager@example.com">
+            <label class="label" for="mailSubject">Subject</label>
+            <input class="input" id="mailSubject">
+            <label class="label" for="mailBody">Message <span class="muted small">(you can edit it before sending)</span></label>
+            <textarea class="input mono" id="mailBody" rows="18"></textarea>
+            <div class="btn-row">
+              <button type="button" class="btn primary" id="sendMailBtn">✉ Send email</button>
+              <button type="button" class="btn" id="copyMailBtn">⧉ Copy text</button>
+              <button type="button" class="btn" id="downloadBtn">⤓ Download report</button>
+            </div>
+            <div class="notice small" id="mailNotice" hidden></div>
+            <p class="small muted hint">“Send email” opens your email program with everything filled in; you press Send there.
+              Nothing happens? This computer has no email program set up: use “Copy text” and paste into webmail,
+              or attach the downloaded report.</p>
+          </div>
+        </div>
+
+        <div class="tab-panel" id="tab-output" hidden>
+          <pre class="card output mono" id="output"></pre>
+        </div>
+      </section>
+    </main>
+  </div>
+  <div class="scrim" id="scrim"></div>
+  <script src="/app.js"></script>
+  <script src="/compare.js"></script>
+</body>
+</html>

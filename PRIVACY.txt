@@ -1,0 +1,140 @@
+NMAP-GUI – PRIVACY STATEMENT
+============================
+
+Applies to: nmap-gui 1.0.0 and later
+Last updated: 17 November 2026
+
+
+SUMMARY
+-------
+
+nmap-gui runs entirely on your own computer. It does not collect or send any
+data about you, has no user accounts, no advertising, no analytics, no update
+checks and no tracking. The only network traffic it causes is the scans that
+you start yourself. Everything it stores stays in your own home folder, and
+you can delete it at any time.
+
+
+1. WHO IS RESPONSIBLE
+---------------------
+
+nmap-gui is free software, published under the GNU General Public License
+version 3 or later by its developer (GitHub: agent-denis). Because the program
+sends no data to the developer or anyone else, the developer receives no
+information about you, your network or how you use the program.
+
+Questions about this statement:
+https://github.com/agent-denis/nmap-gui/issues
+
+
+2. NETWORK CONNECTIONS
+----------------------
+
+nmap-gui is made of two parts that both run on your computer: a small local
+server and the page you see in your web browser.
+
+  - The local server only listens on 127.0.0.1 (your own computer). Other
+    computers on your network or on the internet cannot reach it. It also
+    refuses requests that come from other websites open in your browser.
+
+  - The page loads nothing from the internet: no fonts, no scripts, no
+    images and no analytics from other websites.
+
+  - When you start a scan, nmap-gui runs the program "nmap" on your computer.
+    nmap then sends network packets to the targets YOU entered, which is the
+    purpose of a network scan. Those devices (and their owners, firewalls or
+    network administrators) can see that they were scanned from your
+    computer. Only scan networks and devices you own or have permission to
+    scan.
+
+  - If you scan a name such as scanme.nmap.org, your computer looks up that
+    name with your normal DNS server, as any program would. nmap may also
+    look up the names of the addresses it finds.
+
+nmap-gui does NOT:
+
+  - send usage statistics, crash reports or "telemetry",
+  - check for updates,
+  - upload or share your scan results,
+  - send email by itself (see section 4).
+
+
+3. WHAT THE PROGRAM STORES, AND WHERE
+-------------------------------------
+
+Everything is stored only in your own home folder:
+
+  ~/.local/share/nmap-gui/scans/
+      One pair of files for every scan in your history:
+        <id>.json  the target, scan type, date and time, nmap's output and
+                   the results;
+        <id>.xml   nmap's own XML report.
+      The results describe the scanned devices: IP addresses, MAC addresses
+      and network-card makers, hostnames, open ports, the software running on
+      them, operating-system guesses and script output (for example web page
+      titles or security certificates). Treat these files as you would any
+      other information about your network.
+
+  ~/.local/share/nmap-gui/settings.json
+      Your email template: the subject, the message wording and the default
+      recipients' email addresses.
+
+  Your web browser
+      Only your light/dark theme choice, in the browser's local storage for
+      the nmap-gui page.
+
+  ~/.local/share/nmap-gui/app/ and installed-files.txt
+      The program itself, when installed with install.sh (no personal data).
+
+If you start nmap-gui with sudo (admin mode), it runs as the administrator,
+and that session's history and settings are stored in the administrator's
+home folder (/root/.local/share/nmap-gui/) instead.
+
+Nothing is shared with other users of the computer beyond what the normal
+file permissions of your home folder allow.
+
+
+4. EMAIL NOTES AND REPORTS
+--------------------------
+
+The Changes tab can prepare a note about what changed on your network.
+
+  - "Send email" asks your computer to open your own email program with the
+    recipients, subject and text filled in. nmap-gui does not send the email
+    and does not see whether it was sent. Once you send it, the people you
+    chose receive the information in the note, and your email provider
+    handles it under its own privacy terms.
+
+  - "Copy text" puts the note on your clipboard.
+
+  - "Download report" saves an HTML file with the changes to your browser's
+    download folder. It stays there until you delete it.
+
+
+5. HOW TO DELETE YOUR DATA
+--------------------------
+
+  - In the program: open a scan and press the bin button to delete it from
+    the history (both of its files are removed).
+  - Delete the folder ~/.local/share/nmap-gui/scans/ to remove all history,
+    and ~/.local/share/nmap-gui/settings.json to reset the email template.
+    nmap-gui creates new, empty ones when needed.
+  - When uninstalling: "./uninstall.sh --purge" (installer version) removes
+    the program and all history and settings. With the RPM package, remove
+    the program with "sudo dnf remove nmap-gui" and delete
+    ~/.local/share/nmap-gui/ yourself.
+  - Downloaded reports are ordinary files in your download folder.
+
+
+6. CHILDREN
+-----------
+
+nmap-gui collects no personal information from anyone, including children.
+
+
+7. CHANGES TO THIS STATEMENT
+----------------------------
+
+If a future version changes how data is handled, this statement will be
+updated and the change will be listed in CHANGELOG.md. The current version is
+always in the source code: PRIVACY.txt.

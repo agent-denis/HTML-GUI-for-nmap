@@ -1,0 +1,18 @@
+[Desktop Entry]
+Type=Application
+Version=1.5
+Name=nmap-gui
+GenericName=Network Scanner
+Comment=Scan your network with nmap in a modern browser interface
+Exec=nmap-gui --app
+TryExec=nmap-gui
+Icon=io.github.agent_denis.NmapGui
+Terminal=false
+StartupNotify=false
+Categories=Network;Monitor;
+Keywords=nmap;network;scan;scanner;port;ports;security;devices;lan;wifi;
+Actions=stop;
+
+[Desktop Action stop]
+Name=Stop nmap-gui
+Exec=nmap-gui --stop

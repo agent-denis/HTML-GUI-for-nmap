@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.agent_denis.NmapGui</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+  <name>nmap-gui</name>
+  <summary>Scan your network with nmap in a modern interface</summary>
+  <developer id="io.github.agent_denis">
+    <name>Denis</name>
+  </developer>
+  <description>
+    <p>
+      nmap-gui is a modern, easy interface for the nmap network scanner. It runs on your own
+      computer and opens in your web browser.
+    </p>
+    <ul>
+      <li>Ten ready-made scan types, from finding devices to full service and OS detection</li>
+      <li>Live progress with devices and open ports appearing as they are found</li>
+      <li>Results as device cards, a filterable port table and a network map</li>
+      <li>Scan history, and a comparison that shows what changed since an earlier scan</li>
+      <li>A ready-to-send email note about the changes, from your own template</li>
+    </ul>
+    <p>
+      Only scan networks and computers you own or have permission to scan.
+    </p>
+  </description>
+  <launchable type="desktop-id">io.github.agent_denis.NmapGui.desktop</launchable>
+  <url type="homepage">https://github.com/agent-denis/nmap-gui</url>
+  <url type="bugtracker">https://github.com/agent-denis/nmap-gui/issues</url>
+  <url type="vcs-browser">https://github.com/agent-denis/nmap-gui</url>
+  <screenshots>
+    <screenshot type="default">
+      <caption>Choose a target and one of ten ready-made scan types</caption>
+      <image>https://raw.githubusercontent.com/agent-denis/nmap-gui/main/docs/screenshots/new-scan.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>Results: one card per device, dark theme</caption>
+      <image>https://raw.githubusercontent.com/agent-denis/nmap-gui/main/docs/screenshots/results-dark.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>Network map coloured by open ports</caption>
+      <image>https://raw.githubusercontent.com/agent-denis/nmap-gui/main/docs/screenshots/network-map.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>What changed since the last scan, with an email note</caption>
+      <image>https://raw.githubusercontent.com/agent-denis/nmap-gui/main/docs/screenshots/changes.png</image>
+    </screenshot>
+  </screenshots>
+  <categories>
+    <category>Network</category>
+    <category>System</category>
+  </categories>
+  <keywords>
+    <keyword>nmap</keyword>
+    <keyword>network</keyword>
+    <keyword>scanner</keyword>
+    <keyword>port</keyword>
+  </keywords>
+  <provides>
+    <binary>nmap-gui</binary>
+  </provides>
+  <requires>
+    <internet>offline-only</internet>
+  </requires>
+  <content_rating type="oars-1.1"/>
+  <releases>
+    <release version="1.0.0" date="2026-11-17">
+      <description>
+        <p>First release: scan presets, live results, network map, history, change reports with email note,
+          desktop launcher.</p>
+      </description>
+    </release>
+  </releases>
+</component>
